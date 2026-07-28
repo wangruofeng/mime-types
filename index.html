@@ -1,0 +1,4045 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MIME 类型速查工具</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<style>
+  :root {
+    --bg: #f6f7f9;
+    --panel: #ffffff;
+    --border: #e5e7eb;
+    --border-strong: #d1d5db;
+    --text: #1f2328;
+    --text-muted: #6b7280;
+    --text-faint: #9ca3af;
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --accent-soft: #eff6ff;
+    --danger: #dc2626;
+    --danger-soft: #fef2f2;
+    --success: #16a34a;
+    --success-soft: #f0fdf4;
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+    --radius: 10px;
+  }
+  html.dark {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --border: #30363d;
+    --border-strong: #484f58;
+    --text: #e6edf3;
+    --text-muted: #9198a1;
+    --text-faint: #6e7681;
+    --accent: #58a6ff;
+    --accent-hover: #79b8ff;
+    --accent-soft: #1a2332;
+    --danger: #f87171;
+    --danger-soft: #2a1a1c;
+    --success: #4ade80;
+    --success-soft: #0d2118;
+    --shadow: 0 1px 3px rgba(0,0,0,.4);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                 "Hiragino Sans GB", "Microsoft YaHei", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ---------- Header ---------- */
+  header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 20px; background: var(--panel);
+    border-bottom: 1px solid var(--border); flex-shrink: 0;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 650; }
+  .logo .mark {
+    width: 30px; height: 30px; border-radius: 8px;
+    display: grid; place-items: center;
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    color: #fff; font-size: 14px; font-weight: 700; line-height: 1;
+  }
+  .logo .sub { font-size: 12px; color: var(--text-muted); font-weight: 400; }
+  .spacer { flex: 1; }
+
+  .icon-btn {
+    width: 36px; height: 36px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--panel);
+    color: var(--text-muted); cursor: pointer;
+    display: grid; place-items: center; transition: all .15s;
+  }
+  .icon-btn:hover { color: var(--text); border-color: var(--border-strong); background: var(--bg); }
+  .icon-btn svg { width: 18px; height: 18px; }
+  header .icon-btn { border: none; background: transparent; }
+  header .icon-btn:hover { background: var(--bg); border-color: transparent; }
+
+  /* ---------- Toolbar ---------- */
+  .toolbar {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+    padding: 10px 20px; background: var(--panel);
+    border-bottom: 1px solid var(--border); flex-shrink: 0;
+  }
+  .search-wrap {
+    display: flex; align-items: center; flex: 1; min-width: 240px;
+    border: 1px solid var(--border); border-radius: 8px;
+    background: var(--bg); padding: 0 10px; transition: all .15s;
+  }
+  .search-wrap:focus-within { border-color: var(--accent); background: var(--panel); }
+  .search-wrap svg { width: 16px; height: 16px; color: var(--text-faint); flex-shrink: 0; }
+  #search {
+    flex: 1; border: 0; background: transparent; color: var(--text);
+    padding: 9px 8px; font-size: 13px; outline: none;
+  }
+  #search::placeholder { color: var(--text-faint); }
+  .seg {
+    display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+    flex-wrap: wrap;
+  }
+  .seg button {
+    height: 34px; padding: 0 11px; border: 0; background: var(--panel);
+    color: var(--text-muted); font-size: 12.5px; cursor: pointer;
+    border-right: 1px solid var(--border); transition: all .15s;
+  }
+  .seg button:last-child { border-right: 0; }
+  .seg button:hover { background: var(--bg); color: var(--text); }
+  .seg button.active { background: var(--accent-soft); color: var(--accent); }
+
+  .stat { font-size: 12px; color: var(--text-muted); display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .stat b { color: var(--text); font-weight: 600; }
+
+  /* ---------- Main ---------- */
+  main { flex: 1; overflow: auto; padding: 18px 20px 60px; }
+
+  .table-wrap {
+    max-width: 1200px; margin: 0 auto; background: var(--panel);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow); overflow: hidden;
+  }
+  table {
+    width: 100%; border-collapse: collapse; font-size: 13px;
+  }
+  thead {
+    position: sticky; top: 0; z-index: 1;
+    background: var(--bg); border-bottom: 1px solid var(--border);
+  }
+  th {
+    text-align: left; padding: 10px 12px; font-weight: 600; color: var(--text-muted);
+    white-space: nowrap;
+  }
+  td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tbody tr { transition: background .12s; cursor: pointer; }
+  tbody tr:hover { background: var(--bg); }
+  tbody tr:last-child td { border-bottom: 0; }
+
+  .col-ext { width: 100px; }
+  .col-mime { width: auto; }
+  .col-cat { width: 80px; }
+  .col-desc { width: 35%; }
+  .col-action { width: 60px; text-align: right; }
+
+  .ext-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Menlo, Consolas, monospace;
+    font-size: 12px; font-weight: 600; color: var(--accent);
+    background: var(--accent-soft); border-radius: 6px;
+    padding: 3px 8px; border: 1px solid var(--border);
+  }
+  .ext-pill::before { content: '.'; opacity: .7; }
+  .mime-code {
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Menlo, Consolas, monospace;
+    font-size: 12px; color: var(--text);
+    word-break: break-all;
+  }
+  .cat-badge {
+    display: inline-block; font-size: 11px; font-weight: 500;
+    padding: 2px 8px; border-radius: 10px; background: var(--bg);
+    color: var(--text-muted); border: 1px solid var(--border);
+  }
+  .desc-txt { color: var(--text-muted); }
+
+  .copy-btn {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 8px; border-radius: 6px;
+    border: 1px solid var(--border); background: var(--panel);
+    color: var(--text-muted); font-size: 12px; cursor: pointer;
+    transition: all .12s; opacity: 0;
+  }
+  tr:hover .copy-btn { opacity: 1; }
+  .copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+  .copy-btn svg { width: 12px; height: 12px; }
+  .copy-btn.copied { color: var(--success); border-color: var(--success); opacity: 1; }
+
+  .empty-state {
+    max-width: 640px; margin: 10vh auto 0; text-align: center;
+    color: var(--text-muted); padding: 0 20px;
+  }
+  .empty-state .big-icon {
+    width: 64px; height: 64px; margin: 0 auto 18px; border-radius: 16px;
+    display: grid; place-items: center; background: var(--accent-soft); color: var(--accent);
+  }
+  .empty-state .big-icon svg { width: 30px; height: 30px; }
+  .empty-state h2 { margin: 0 0 8px; font-size: 18px; font-weight: 600; color: var(--text); }
+  .empty-state p { margin: 0; font-size: 13.5px; line-height: 1.7; }
+  .empty-state .hint { margin-top: 14px; font-size: 12px; color: var(--text-faint); }
+
+  /* ---------- Toast ---------- */
+  #toast {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--text); color: var(--panel);
+    padding: 9px 16px; border-radius: 8px; font-size: 13px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.2);
+    opacity: 0; pointer-events: none; transition: all .22s;
+    z-index: 200; display: flex; align-items: center; gap: 7px;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #toast svg { width: 15px; height: 15px; }
+
+  .hidden { display: none !important; }
+
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 6px; border: 2px solid var(--bg); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-faint); }
+
+  @media (max-width: 640px) {
+    header { padding: 12px 14px; }
+    .toolbar { padding: 8px 12px; gap: 8px; }
+    main { padding: 12px 12px 50px; }
+    .logo .sub { display: none; }
+    .col-desc { display: none; }
+    .col-cat { width: 64px; }
+    .seg button { padding: 0 9px; font-size: 12px; }
+    .copy-btn { opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="mark">M:</div>
+    <div>
+      MIME 类型速查工具
+      <div class="sub">扩展名 ↔ Content-Type 双向查询</div>
+    </div>
+  </div>
+  <div class="spacer"></div>
+  <a class="icon-btn" href="https://github.com/wangruofeng/mime-types" target="_blank" rel="noopener noreferrer" title="查看 GitHub 源码" aria-label="GitHub 源码仓库">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.37.5 0 5.78 0 12.292c0 5.211 3.438 9.63 8.205 11.188.6.111.82-.254.82-.567 0-.28-.01-1.022-.015-2.005-3.338.711-4.042-1.582-4.042-1.582-.546-1.361-1.335-1.725-1.335-1.725-1.087-.731.084-.716.084-.716 1.205.082 1.838 1.215 1.838 1.215 1.07 1.803 2.809 1.282 3.495.981.108-.763.417-1.282.76-1.577-2.665-.295-5.466-1.309-5.466-5.827 0-1.287.465-2.339 1.235-3.164-.135-.297-.54-1.498.105-3.121 0 0 1.005-.316 3.3 1.209.96-.262 1.98-.392 3-.397 1.02.005 2.04.135 3 .397 2.28-1.525 3.285-1.209 3.285-1.209.645 1.623.24 2.824.12 3.121.765.825 1.23 1.877 1.23 3.164 0 4.53-2.805 5.527-5.475 5.817.42.354.81 1.077.81 2.182 0 1.578-.015 2.846-.015 3.229 0 .309.21.678.825.562C20.565 21.917 24 17.495 24 12.292 24 5.78 18.627.5 12 .5z"/></svg>
+  </a>
+  <button class="icon-btn" id="themeBtn" title="切换深浅色"></button>
+</header>
+
+<div class="toolbar">
+  <div class="search-wrap">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="search" id="search" placeholder="输入扩展名、MIME 类型、中文说明，或粘贴文件名" autocomplete="off" spellcheck="false">
+  </div>
+  <div class="seg" id="catSeg">
+    <button data-cat="all">全部</button>
+    <button data-cat="docs">文档</button>
+    <button data-cat="image">图片</button>
+    <button data-cat="audio">音频</button>
+    <button data-cat="video">视频</button>
+    <button data-cat="font">字体</button>
+    <button data-cat="archive">压缩</button>
+    <button data-cat="code">代码</button>
+    <button data-cat="data">数据</button>
+  </div>
+  <div class="spacer"></div>
+  <div class="stat">
+    共 <b id="totalStat">0</b> 条 · 匹配 <b id="matchStat">0</b> 条
+  </div>
+</div>
+
+<main id="main">
+  <div class="empty-state" id="introState">
+    <div class="big-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+    </div>
+    <h2>输入关键词开始查询</h2>
+    <p>支持扩展名、MIME 类型、中文说明搜索；<br>也支持粘贴文件名自动提取扩展名（如 archive.tar.gz）。</p>
+    <div class="hint">点击表格行复制 MIME 类型，点击行尾按钮复制扩展名。</div>
+  </div>
+</main>
+
+<div id="toast"></div>
+
+<script>
+/* =========================================================
+   MIME 类型速查工具
+   - 592 条常见扩展名 ↔ MIME 类型映射
+   - 八大中文分类：文档 / 图片 / 音频 / 视频 / 字体 / 压缩 / 代码 / 数据
+   - 即时搜索、分类筛选、文件名扩展名提取、一键复制
+   ========================================================= */
+
+const MIME_DATA = [
+  {
+    "ext": "html",
+    "mime": "text/html",
+    "cat": "docs",
+    "desc": "HTML 网页"
+  },
+  {
+    "ext": "htm",
+    "mime": "text/html",
+    "cat": "docs",
+    "desc": "HTML 网页（旧扩展名）"
+  },
+  {
+    "ext": "xhtml",
+    "mime": "application/xhtml+xml",
+    "cat": "docs",
+    "desc": "XHTML 文档"
+  },
+  {
+    "ext": "xht",
+    "mime": "application/xhtml+xml",
+    "cat": "docs",
+    "desc": "XHTML 文档"
+  },
+  {
+    "ext": "shtml",
+    "mime": "text/html",
+    "cat": "docs",
+    "desc": "服务器端包含 HTML"
+  },
+  {
+    "ext": "pdf",
+    "mime": "application/pdf",
+    "cat": "docs",
+    "desc": "PDF 便携式文档"
+  },
+  {
+    "ext": "doc",
+    "mime": "application/msword",
+    "cat": "docs",
+    "desc": "Microsoft Word 97-2003"
+  },
+  {
+    "ext": "docx",
+    "mime": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "cat": "docs",
+    "desc": "Microsoft Word 文档"
+  },
+  {
+    "ext": "dot",
+    "mime": "application/msword",
+    "cat": "docs",
+    "desc": "Word 97-2003 模板"
+  },
+  {
+    "ext": "dotx",
+    "mime": "application/vnd.openxmlformats-officedocument.wordprocessingml.template",
+    "cat": "docs",
+    "desc": "Word 模板"
+  },
+  {
+    "ext": "docm",
+    "mime": "application/vnd.ms-word.document.macroEnabled.12",
+    "cat": "docs",
+    "desc": "启用宏的 Word 文档"
+  },
+  {
+    "ext": "dotm",
+    "mime": "application/vnd.ms-word.template.macroEnabled.12",
+    "cat": "docs",
+    "desc": "启用宏的 Word 模板"
+  },
+  {
+    "ext": "xls",
+    "mime": "application/vnd.ms-excel",
+    "cat": "docs",
+    "desc": "Microsoft Excel 97-2003"
+  },
+  {
+    "ext": "xlsx",
+    "mime": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "cat": "docs",
+    "desc": "Microsoft Excel 工作簿"
+  },
+  {
+    "ext": "xlsm",
+    "mime": "application/vnd.ms-excel.sheet.macroEnabled.12",
+    "cat": "docs",
+    "desc": "启用宏的 Excel 工作簿"
+  },
+  {
+    "ext": "xlsb",
+    "mime": "application/vnd.ms-excel.sheet.binary.macroEnabled.12",
+    "cat": "docs",
+    "desc": "Excel 二进制工作簿"
+  },
+  {
+    "ext": "xltx",
+    "mime": "application/vnd.openxmlformats-officedocument.spreadsheetml.template",
+    "cat": "docs",
+    "desc": "Excel 模板"
+  },
+  {
+    "ext": "xlt",
+    "mime": "application/vnd.ms-excel",
+    "cat": "docs",
+    "desc": "Excel 97-2003 模板"
+  },
+  {
+    "ext": "xltm",
+    "mime": "application/vnd.ms-excel.template.macroEnabled.12",
+    "cat": "docs",
+    "desc": "启用宏的 Excel 模板"
+  },
+  {
+    "ext": "xlam",
+    "mime": "application/vnd.ms-excel.addin.macroEnabled.12",
+    "cat": "docs",
+    "desc": "Excel 加载项"
+  },
+  {
+    "ext": "xla",
+    "mime": "application/vnd.ms-excel",
+    "cat": "docs",
+    "desc": "Excel 加载项"
+  },
+  {
+    "ext": "ppt",
+    "mime": "application/vnd.ms-powerpoint",
+    "cat": "docs",
+    "desc": "Microsoft PowerPoint 97-2003"
+  },
+  {
+    "ext": "pptx",
+    "mime": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    "cat": "docs",
+    "desc": "Microsoft PowerPoint 演示文稿"
+  },
+  {
+    "ext": "pot",
+    "mime": "application/vnd.ms-powerpoint",
+    "cat": "docs",
+    "desc": "PowerPoint 97-2003 模板"
+  },
+  {
+    "ext": "potx",
+    "mime": "application/vnd.openxmlformats-officedocument.presentationml.template",
+    "cat": "docs",
+    "desc": "PowerPoint 模板"
+  },
+  {
+    "ext": "pps",
+    "mime": "application/vnd.ms-powerpoint",
+    "cat": "docs",
+    "desc": "PowerPoint 97-2003 放映"
+  },
+  {
+    "ext": "ppsx",
+    "mime": "application/vnd.openxmlformats-officedocument.presentationml.slideshow",
+    "cat": "docs",
+    "desc": "PowerPoint 放映"
+  },
+  {
+    "ext": "ppsm",
+    "mime": "application/vnd.ms-powerpoint.slideshow.macroEnabled.12",
+    "cat": "docs",
+    "desc": "启用宏的 PowerPoint 放映"
+  },
+  {
+    "ext": "pptm",
+    "mime": "application/vnd.ms-powerpoint.presentation.macroEnabled.12",
+    "cat": "docs",
+    "desc": "启用宏的 PowerPoint 演示文稿"
+  },
+  {
+    "ext": "potm",
+    "mime": "application/vnd.ms-powerpoint.template.macroEnabled.12",
+    "cat": "docs",
+    "desc": "启用宏的 PowerPoint 模板"
+  },
+  {
+    "ext": "odt",
+    "mime": "application/vnd.oasis.opendocument.text",
+    "cat": "docs",
+    "desc": "OpenDocument 文本文档"
+  },
+  {
+    "ext": "ott",
+    "mime": "application/vnd.oasis.opendocument.text-template",
+    "cat": "docs",
+    "desc": "OpenDocument 文本模板"
+  },
+  {
+    "ext": "ods",
+    "mime": "application/vnd.oasis.opendocument.spreadsheet",
+    "cat": "docs",
+    "desc": "OpenDocument 电子表格"
+  },
+  {
+    "ext": "ots",
+    "mime": "application/vnd.oasis.opendocument.spreadsheet-template",
+    "cat": "docs",
+    "desc": "OpenDocument 表格模板"
+  },
+  {
+    "ext": "odp",
+    "mime": "application/vnd.oasis.opendocument.presentation",
+    "cat": "docs",
+    "desc": "OpenDocument 演示文稿"
+  },
+  {
+    "ext": "otp",
+    "mime": "application/vnd.oasis.opendocument.presentation-template",
+    "cat": "docs",
+    "desc": "OpenDocument 演示模板"
+  },
+  {
+    "ext": "odf",
+    "mime": "application/vnd.oasis.opendocument.formula",
+    "cat": "docs",
+    "desc": "OpenDocument 公式"
+  },
+  {
+    "ext": "odg",
+    "mime": "application/vnd.oasis.opendocument.graphics",
+    "cat": "docs",
+    "desc": "OpenDocument 图形"
+  },
+  {
+    "ext": "odc",
+    "mime": "application/vnd.oasis.opendocument.chart",
+    "cat": "docs",
+    "desc": "OpenDocument 图表"
+  },
+  {
+    "ext": "odm",
+    "mime": "application/vnd.oasis.opendocument.text-master",
+    "cat": "docs",
+    "desc": "OpenDocument 主文档"
+  },
+  {
+    "ext": "odb",
+    "mime": "application/vnd.oasis.opendocument.database",
+    "cat": "docs",
+    "desc": "OpenDocument 数据库"
+  },
+  {
+    "ext": "odi",
+    "mime": "application/vnd.oasis.opendocument.image",
+    "cat": "docs",
+    "desc": "OpenDocument 图像"
+  },
+  {
+    "ext": "rtf",
+    "mime": "application/rtf",
+    "cat": "docs",
+    "desc": "富文本格式"
+  },
+  {
+    "ext": "txt",
+    "mime": "text/plain",
+    "cat": "docs",
+    "desc": "纯文本"
+  },
+  {
+    "ext": "text",
+    "mime": "text/plain",
+    "cat": "docs",
+    "desc": "纯文本"
+  },
+  {
+    "ext": "log",
+    "mime": "text/plain",
+    "cat": "docs",
+    "desc": "日志文件"
+  },
+  {
+    "ext": "me",
+    "mime": "text/plain",
+    "cat": "docs",
+    "desc": "README 风格文本"
+  },
+  {
+    "ext": "nfo",
+    "mime": "text/plain",
+    "cat": "docs",
+    "desc": "信息文本"
+  },
+  {
+    "ext": "readme",
+    "mime": "text/plain",
+    "cat": "docs",
+    "desc": "说明文本"
+  },
+  {
+    "ext": "md",
+    "mime": "text/markdown",
+    "cat": "docs",
+    "desc": "Markdown 文档"
+  },
+  {
+    "ext": "markdown",
+    "mime": "text/markdown",
+    "cat": "docs",
+    "desc": "Markdown 文档"
+  },
+  {
+    "ext": "mdx",
+    "mime": "text/mdx",
+    "cat": "docs",
+    "desc": "MDX 文档"
+  },
+  {
+    "ext": "epub",
+    "mime": "application/epub+zip",
+    "cat": "docs",
+    "desc": "EPUB 电子书"
+  },
+  {
+    "ext": "mobi",
+    "mime": "application/x-mobipocket-ebook",
+    "cat": "docs",
+    "desc": "Mobipocket 电子书"
+  },
+  {
+    "ext": "azw",
+    "mime": "application/vnd.amazon.ebook",
+    "cat": "docs",
+    "desc": "Amazon Kindle 电子书"
+  },
+  {
+    "ext": "azw3",
+    "mime": "application/vnd.amazon.ebook",
+    "cat": "docs",
+    "desc": "Kindle KF8 电子书"
+  },
+  {
+    "ext": "djvu",
+    "mime": "image/vnd.djvu",
+    "cat": "docs",
+    "desc": "DjVu 扫描文档"
+  },
+  {
+    "ext": "ps",
+    "mime": "application/postscript",
+    "cat": "docs",
+    "desc": "PostScript 文档"
+  },
+  {
+    "ext": "eps",
+    "mime": "application/postscript",
+    "cat": "docs",
+    "desc": "Encapsulated PostScript"
+  },
+  {
+    "ext": "ai",
+    "mime": "application/postscript",
+    "cat": "docs",
+    "desc": "Adobe Illustrator 文档"
+  },
+  {
+    "ext": "wps",
+    "mime": "application/vnd.ms-works",
+    "cat": "docs",
+    "desc": "WPS Office 文档"
+  },
+  {
+    "ext": "wpt",
+    "mime": "application/vnd.ms-works",
+    "cat": "docs",
+    "desc": "WPS Office 模板"
+  },
+  {
+    "ext": "et",
+    "mime": "application/wps-office.et",
+    "cat": "docs",
+    "desc": "WPS 表格"
+  },
+  {
+    "ext": "dps",
+    "mime": "application/wps-office.dps",
+    "cat": "docs",
+    "desc": "WPS 演示"
+  },
+  {
+    "ext": "wpd",
+    "mime": "application/wordperfect",
+    "cat": "docs",
+    "desc": "WordPerfect 文档"
+  },
+  {
+    "ext": "pages",
+    "mime": "application/vnd.apple.pages",
+    "cat": "docs",
+    "desc": "Apple Pages 文档"
+  },
+  {
+    "ext": "numbers",
+    "mime": "application/vnd.apple.numbers",
+    "cat": "docs",
+    "desc": "Apple Numbers 表格"
+  },
+  {
+    "ext": "key",
+    "mime": "application/vnd.apple.keynote",
+    "cat": "docs",
+    "desc": "Apple Keynote 演示"
+  },
+  {
+    "ext": "tex",
+    "mime": "application/x-tex",
+    "cat": "docs",
+    "desc": "LaTeX 源文档"
+  },
+  {
+    "ext": "latex",
+    "mime": "application/x-latex",
+    "cat": "docs",
+    "desc": "LaTeX 文档"
+  },
+  {
+    "ext": "bib",
+    "mime": "text/x-bibtex",
+    "cat": "docs",
+    "desc": "BibTeX 文献"
+  },
+  {
+    "ext": "ssv",
+    "mime": "text/x-semicolon-separated-values",
+    "cat": "docs",
+    "desc": "分号分隔值"
+  },
+  {
+    "ext": "xps",
+    "mime": "application/oxps",
+    "cat": "docs",
+    "desc": "XML 纸张规范"
+  },
+  {
+    "ext": "oxps",
+    "mime": "application/oxps",
+    "cat": "docs",
+    "desc": "OpenXPS 文档"
+  },
+  {
+    "ext": "fb2",
+    "mime": "application/fb2",
+    "cat": "docs",
+    "desc": "FictionBook 电子书"
+  },
+  {
+    "ext": "prc",
+    "mime": "application/x-mobipocket-ebook",
+    "cat": "docs",
+    "desc": "Palm/Mobipocket 电子书"
+  },
+  {
+    "ext": "lit",
+    "mime": "application/x-ms-reader",
+    "cat": "docs",
+    "desc": "Microsoft Reader 电子书"
+  },
+  {
+    "ext": "pdb",
+    "mime": "application/vnd.palm",
+    "cat": "docs",
+    "desc": "Palm 文档"
+  },
+  {
+    "ext": "chm",
+    "mime": "application/vnd.ms-htmlhelp",
+    "cat": "docs",
+    "desc": "已编译 HTML 帮助"
+  },
+  {
+    "ext": "hlp",
+    "mime": "application/winhlp",
+    "cat": "docs",
+    "desc": "Windows 帮助文件"
+  },
+  {
+    "ext": "man",
+    "mime": "application/x-troff-man",
+    "cat": "docs",
+    "desc": "Unix 手册页"
+  },
+  {
+    "ext": "info",
+    "mime": "application/x-info",
+    "cat": "docs",
+    "desc": "GNU Info 文档"
+  },
+  {
+    "ext": "asc",
+    "mime": "text/plain",
+    "cat": "docs",
+    "desc": "ASCII 文本"
+  },
+  {
+    "ext": "srt",
+    "mime": "application/x-subrip",
+    "cat": "docs",
+    "desc": "SubRip 字幕"
+  },
+  {
+    "ext": "sub",
+    "mime": "text/x-microdvd",
+    "cat": "docs",
+    "desc": "MicroDVD 字幕"
+  },
+  {
+    "ext": "vtt",
+    "mime": "text/vtt",
+    "cat": "docs",
+    "desc": "WebVTT 字幕"
+  },
+  {
+    "ext": "ass",
+    "mime": "text/x-ssa",
+    "cat": "docs",
+    "desc": "ASS 字幕"
+  },
+  {
+    "ext": "ssa",
+    "mime": "text/x-ssa",
+    "cat": "docs",
+    "desc": "SSA 字幕"
+  },
+  {
+    "ext": "dfxp",
+    "mime": "application/ttaf+xml",
+    "cat": "docs",
+    "desc": "TTML/DFXP 字幕"
+  },
+  {
+    "ext": "ttml",
+    "mime": "application/ttaf+xml",
+    "cat": "docs",
+    "desc": "TTML 字幕"
+  },
+  {
+    "ext": "smi",
+    "mime": "application/smil+xml",
+    "cat": "docs",
+    "desc": "SAMI 字幕"
+  },
+  {
+    "ext": "sbv",
+    "mime": "text/x-sbv",
+    "cat": "docs",
+    "desc": "SubViewer 字幕"
+  },
+  {
+    "ext": "lrc",
+    "mime": "application/lrc",
+    "cat": "docs",
+    "desc": "歌词字幕"
+  },
+  {
+    "ext": "gdoc",
+    "mime": "application/vnd.google-apps.document",
+    "cat": "docs",
+    "desc": "Google 文档"
+  },
+  {
+    "ext": "gsheet",
+    "mime": "application/vnd.google-apps.spreadsheet",
+    "cat": "docs",
+    "desc": "Google 表格"
+  },
+  {
+    "ext": "gslides",
+    "mime": "application/vnd.google-apps.presentation",
+    "cat": "docs",
+    "desc": "Google 幻灯片"
+  },
+  {
+    "ext": "gform",
+    "mime": "application/vnd.google-apps.form",
+    "cat": "docs",
+    "desc": "Google 表单"
+  },
+  {
+    "ext": "gdraw",
+    "mime": "application/vnd.google-apps.drawing",
+    "cat": "docs",
+    "desc": "Google 绘图"
+  },
+  {
+    "ext": "gtable",
+    "mime": "application/vnd.google-apps.table",
+    "cat": "docs",
+    "desc": "Google 数据表"
+  },
+  {
+    "ext": "png",
+    "mime": "image/png",
+    "cat": "image",
+    "desc": "PNG 位图"
+  },
+  {
+    "ext": "apng",
+    "mime": "image/apng",
+    "cat": "image",
+    "desc": "APNG 动画位图"
+  },
+  {
+    "ext": "jpg",
+    "mime": "image/jpeg",
+    "cat": "image",
+    "desc": "JPEG 图片"
+  },
+  {
+    "ext": "jpeg",
+    "mime": "image/jpeg",
+    "cat": "image",
+    "desc": "JPEG 图片"
+  },
+  {
+    "ext": "jpe",
+    "mime": "image/jpeg",
+    "cat": "image",
+    "desc": "JPEG 图片"
+  },
+  {
+    "ext": "jfif",
+    "mime": "image/jpeg",
+    "cat": "image",
+    "desc": "JFIF 图片"
+  },
+  {
+    "ext": "gif",
+    "mime": "image/gif",
+    "cat": "image",
+    "desc": "GIF 动图/静图"
+  },
+  {
+    "ext": "bmp",
+    "mime": "image/bmp",
+    "cat": "image",
+    "desc": "BMP 位图"
+  },
+  {
+    "ext": "webp",
+    "mime": "image/webp",
+    "cat": "image",
+    "desc": "WebP 图片"
+  },
+  {
+    "ext": "svg",
+    "mime": "image/svg+xml",
+    "cat": "image",
+    "desc": "SVG 矢量图"
+  },
+  {
+    "ext": "ico",
+    "mime": "image/x-icon",
+    "cat": "image",
+    "desc": "Windows 图标"
+  },
+  {
+    "ext": "icns",
+    "mime": "image/icns",
+    "cat": "image",
+    "desc": "macOS 图标"
+  },
+  {
+    "ext": "tiff",
+    "mime": "image/tiff",
+    "cat": "image",
+    "desc": "TIFF 图像"
+  },
+  {
+    "ext": "tif",
+    "mime": "image/tiff",
+    "cat": "image",
+    "desc": "TIFF 图像"
+  },
+  {
+    "ext": "raw",
+    "mime": "image/x-panasonic-raw",
+    "cat": "image",
+    "desc": "相机 RAW 图像"
+  },
+  {
+    "ext": "cr2",
+    "mime": "image/x-canon-cr2",
+    "cat": "image",
+    "desc": "Canon RAW 2"
+  },
+  {
+    "ext": "cr3",
+    "mime": "image/x-canon-cr3",
+    "cat": "image",
+    "desc": "Canon RAW 3"
+  },
+  {
+    "ext": "crw",
+    "mime": "image/x-canon-crw",
+    "cat": "image",
+    "desc": "Canon RAW"
+  },
+  {
+    "ext": "nef",
+    "mime": "image/x-nikon-nef",
+    "cat": "image",
+    "desc": "Nikon RAW"
+  },
+  {
+    "ext": "arw",
+    "mime": "image/x-sony-arw",
+    "cat": "image",
+    "desc": "Sony RAW"
+  },
+  {
+    "ext": "dng",
+    "mime": "image/x-adobe-dng",
+    "cat": "image",
+    "desc": "Adobe DNG 数字负片"
+  },
+  {
+    "ext": "rw2",
+    "mime": "image/x-panasonic-rw2",
+    "cat": "image",
+    "desc": "Panasonic RAW"
+  },
+  {
+    "ext": "orf",
+    "mime": "image/x-olympus-orf",
+    "cat": "image",
+    "desc": "Olympus RAW"
+  },
+  {
+    "ext": "sr2",
+    "mime": "image/x-sony-sr2",
+    "cat": "image",
+    "desc": "Sony RAW 2"
+  },
+  {
+    "ext": "pef",
+    "mime": "image/x-pentax-pef",
+    "cat": "image",
+    "desc": "Pentax RAW"
+  },
+  {
+    "ext": "x3f",
+    "mime": "image/x-sigma-x3f",
+    "cat": "image",
+    "desc": "Sigma RAW"
+  },
+  {
+    "ext": "mrw",
+    "mime": "image/x-minolta-mrw",
+    "cat": "image",
+    "desc": "Minolta RAW"
+  },
+  {
+    "ext": "kdc",
+    "mime": "image/x-kodak-kdc",
+    "cat": "image",
+    "desc": "Kodak RAW"
+  },
+  {
+    "ext": "mos",
+    "mime": "image/x-leaf-mos",
+    "cat": "image",
+    "desc": "Leaf RAW"
+  },
+  {
+    "ext": "iiq",
+    "mime": "image/x-phaseone-iiq",
+    "cat": "image",
+    "desc": "Phase One RAW"
+  },
+  {
+    "ext": "erf",
+    "mime": "image/x-epson-erf",
+    "cat": "image",
+    "desc": "Epson RAW"
+  },
+  {
+    "ext": "raf",
+    "mime": "image/x-fuji-raf",
+    "cat": "image",
+    "desc": "Fujifilm RAW"
+  },
+  {
+    "ext": "gpr",
+    "mime": "image/x-gopro-gpr",
+    "cat": "image",
+    "desc": "GoPro RAW"
+  },
+  {
+    "ext": "pcx",
+    "mime": "image/x-pcx",
+    "cat": "image",
+    "desc": "PCX 位图"
+  },
+  {
+    "ext": "tga",
+    "mime": "image/x-tga",
+    "cat": "image",
+    "desc": "TGA 位图"
+  },
+  {
+    "ext": "tpic",
+    "mime": "image/tga",
+    "cat": "image",
+    "desc": "Targa 图片"
+  },
+  {
+    "ext": "dds",
+    "mime": "image/vnd.ms-dds",
+    "cat": "image",
+    "desc": "DirectDraw Surface 纹理"
+  },
+  {
+    "ext": "exr",
+    "mime": "image/aces",
+    "cat": "image",
+    "desc": "OpenEXR 高动态范围图"
+  },
+  {
+    "ext": "hdr",
+    "mime": "image/vnd.radiance",
+    "cat": "image",
+    "desc": "Radiance HDR 图像"
+  },
+  {
+    "ext": "heic",
+    "mime": "image/heic",
+    "cat": "image",
+    "desc": "HEIC 图片"
+  },
+  {
+    "ext": "heif",
+    "mime": "image/heif",
+    "cat": "image",
+    "desc": "HEIF 图片"
+  },
+  {
+    "ext": "hif",
+    "mime": "image/heif-sequence",
+    "cat": "image",
+    "desc": "HEIF 序列"
+  },
+  {
+    "ext": "avif",
+    "mime": "image/avif",
+    "cat": "image",
+    "desc": "AVIF 图片"
+  },
+  {
+    "ext": "jxl",
+    "mime": "image/jxl",
+    "cat": "image",
+    "desc": "JPEG XL 图片"
+  },
+  {
+    "ext": "jp2",
+    "mime": "image/jp2",
+    "cat": "image",
+    "desc": "JPEG 2000 图片"
+  },
+  {
+    "ext": "j2k",
+    "mime": "image/jp2",
+    "cat": "image",
+    "desc": "JPEG 2000 码流"
+  },
+  {
+    "ext": "jpf",
+    "mime": "image/jp2",
+    "cat": "image",
+    "desc": "JPEG 2000 文件"
+  },
+  {
+    "ext": "jpx",
+    "mime": "image/jpx",
+    "cat": "image",
+    "desc": "JPEG 2000 扩展"
+  },
+  {
+    "ext": "jpm",
+    "mime": "image/jpm",
+    "cat": "image",
+    "desc": "JPEG 2000 复合"
+  },
+  {
+    "ext": "mpo",
+    "mime": "image/mpo",
+    "cat": "image",
+    "desc": "多画面对象图片"
+  },
+  {
+    "ext": "cur",
+    "mime": "image/x-win-bitmap",
+    "cat": "image",
+    "desc": "Windows 光标"
+  },
+  {
+    "ext": "ani",
+    "mime": "application/x-navi-animation",
+    "cat": "image",
+    "desc": "Windows 动画光标"
+  },
+  {
+    "ext": "pnm",
+    "mime": "image/x-portable-anymap",
+    "cat": "image",
+    "desc": "Portable Anymap"
+  },
+  {
+    "ext": "pbm",
+    "mime": "image/x-portable-bitmap",
+    "cat": "image",
+    "desc": "Portable Bitmap"
+  },
+  {
+    "ext": "ppm",
+    "mime": "image/x-portable-pixmap",
+    "cat": "image",
+    "desc": "Portable Pixmap"
+  },
+  {
+    "ext": "pgm",
+    "mime": "image/x-portable-graymap",
+    "cat": "image",
+    "desc": "Portable Graymap"
+  },
+  {
+    "ext": "pam",
+    "mime": "image/x-portable-arbitrarymap",
+    "cat": "image",
+    "desc": "Portable Arbitrary Map"
+  },
+  {
+    "ext": "xbm",
+    "mime": "image/x-xbitmap",
+    "cat": "image",
+    "desc": "X BitMap"
+  },
+  {
+    "ext": "xpm",
+    "mime": "image/x-xpixmap",
+    "cat": "image",
+    "desc": "X PixMap"
+  },
+  {
+    "ext": "xwd",
+    "mime": "image/x-xwindowdump",
+    "cat": "image",
+    "desc": "X Window Dump"
+  },
+  {
+    "ext": "iff",
+    "mime": "image/x-iff",
+    "cat": "image",
+    "desc": "IFF 图像"
+  },
+  {
+    "ext": "sgi",
+    "mime": "image/sgi",
+    "cat": "image",
+    "desc": "SGI 图像"
+  },
+  {
+    "ext": "ras",
+    "mime": "image/x-cmu-raster",
+    "cat": "image",
+    "desc": "Sun Raster"
+  },
+  {
+    "ext": "sun",
+    "mime": "image/x-sun-raster",
+    "cat": "image",
+    "desc": "Sun Raster"
+  },
+  {
+    "ext": "psd",
+    "mime": "image/vnd.adobe.photoshop",
+    "cat": "image",
+    "desc": "Adobe Photoshop"
+  },
+  {
+    "ext": "psb",
+    "mime": "application/vnd.adobe.photoshop",
+    "cat": "image",
+    "desc": "Photoshop 大型文档"
+  },
+  {
+    "ext": "sketch",
+    "mime": "application/x-sketch",
+    "cat": "image",
+    "desc": "Sketch 设计稿"
+  },
+  {
+    "ext": "fig",
+    "mime": "application/fig",
+    "cat": "image",
+    "desc": "Figma 设计稿"
+  },
+  {
+    "ext": "cdr",
+    "mime": "application/coreldraw",
+    "cat": "image",
+    "desc": "CorelDRAW"
+  },
+  {
+    "ext": "cgm",
+    "mime": "image/cgm",
+    "cat": "image",
+    "desc": "计算机图形元文件"
+  },
+  {
+    "ext": "dxf",
+    "mime": "image/vnd.dxf",
+    "cat": "image",
+    "desc": "AutoCAD DXF"
+  },
+  {
+    "ext": "dwg",
+    "mime": "image/vnd.dwg",
+    "cat": "image",
+    "desc": "AutoCAD 图纸"
+  },
+  {
+    "ext": "dwf",
+    "mime": "model/vnd.dwf",
+    "cat": "image",
+    "desc": "Design Web Format"
+  },
+  {
+    "ext": "stl",
+    "mime": "model/stl",
+    "cat": "image",
+    "desc": "STL 3D 模型"
+  },
+  {
+    "ext": "obj",
+    "mime": "model/obj",
+    "cat": "image",
+    "desc": "Wavefront OBJ 模型"
+  },
+  {
+    "ext": "mtl",
+    "mime": "model/mtl",
+    "cat": "image",
+    "desc": "Wavefront 材质"
+  },
+  {
+    "ext": "ply",
+    "mime": "application/ply",
+    "cat": "image",
+    "desc": "Polygon 模型"
+  },
+  {
+    "ext": "gltf",
+    "mime": "model/gltf+json",
+    "cat": "image",
+    "desc": "glTF 3D 模型"
+  },
+  {
+    "ext": "glb",
+    "mime": "model/gltf-binary",
+    "cat": "image",
+    "desc": "glTF 二进制模型"
+  },
+  {
+    "ext": "fbx",
+    "mime": "application/fbx",
+    "cat": "image",
+    "desc": "FBX 3D 模型"
+  },
+  {
+    "ext": "3ds",
+    "mime": "image/x-3ds",
+    "cat": "image",
+    "desc": "3D Studio 模型"
+  },
+  {
+    "ext": "dae",
+    "mime": "model/vnd.collada+xml",
+    "cat": "image",
+    "desc": "COLLADA 模型"
+  },
+  {
+    "ext": "x3d",
+    "mime": "model/x3d+xml",
+    "cat": "image",
+    "desc": "X3D 模型"
+  },
+  {
+    "ext": "wmf",
+    "mime": "image/wmf",
+    "cat": "image",
+    "desc": "Windows 图元文件"
+  },
+  {
+    "ext": "emf",
+    "mime": "image/emf",
+    "cat": "image",
+    "desc": "增强型图元文件"
+  },
+  {
+    "ext": "mp3",
+    "mime": "audio/mpeg",
+    "cat": "audio",
+    "desc": "MP3 音频"
+  },
+  {
+    "ext": "wav",
+    "mime": "audio/wav",
+    "cat": "audio",
+    "desc": "WAV 音频"
+  },
+  {
+    "ext": "wave",
+    "mime": "audio/wav",
+    "cat": "audio",
+    "desc": "WAV 音频"
+  },
+  {
+    "ext": "aiff",
+    "mime": "audio/aiff",
+    "cat": "audio",
+    "desc": "AIFF 音频"
+  },
+  {
+    "ext": "aif",
+    "mime": "audio/aiff",
+    "cat": "audio",
+    "desc": "AIFF 音频"
+  },
+  {
+    "ext": "aifc",
+    "mime": "audio/aiff",
+    "cat": "audio",
+    "desc": "压缩 AIFF"
+  },
+  {
+    "ext": "flac",
+    "mime": "audio/flac",
+    "cat": "audio",
+    "desc": "FLAC 无损音频"
+  },
+  {
+    "ext": "alac",
+    "mime": "audio/alac",
+    "cat": "audio",
+    "desc": "Apple 无损音频"
+  },
+  {
+    "ext": "m4a",
+    "mime": "audio/mp4",
+    "cat": "audio",
+    "desc": "MPEG-4 音频"
+  },
+  {
+    "ext": "m4b",
+    "mime": "audio/mp4",
+    "cat": "audio",
+    "desc": "MPEG-4 有声书"
+  },
+  {
+    "ext": "m4p",
+    "mime": "audio/mp4",
+    "cat": "audio",
+    "desc": "MPEG-4 受保护音频"
+  },
+  {
+    "ext": "aac",
+    "mime": "audio/aac",
+    "cat": "audio",
+    "desc": "AAC 音频"
+  },
+  {
+    "ext": "ogg",
+    "mime": "audio/ogg",
+    "cat": "audio",
+    "desc": "Ogg 音频"
+  },
+  {
+    "ext": "oga",
+    "mime": "audio/ogg",
+    "cat": "audio",
+    "desc": "Ogg 音频"
+  },
+  {
+    "ext": "opus",
+    "mime": "audio/opus",
+    "cat": "audio",
+    "desc": "Opus 音频"
+  },
+  {
+    "ext": "wma",
+    "mime": "audio/x-ms-wma",
+    "cat": "audio",
+    "desc": "Windows Media Audio"
+  },
+  {
+    "ext": "ac3",
+    "mime": "audio/ac3",
+    "cat": "audio",
+    "desc": "Dolby Digital AC-3"
+  },
+  {
+    "ext": "eac3",
+    "mime": "audio/eac3",
+    "cat": "audio",
+    "desc": "Dolby Digital Plus"
+  },
+  {
+    "ext": "dts",
+    "mime": "audio/vnd.dts",
+    "cat": "audio",
+    "desc": "DTS 音频"
+  },
+  {
+    "ext": "dtshd",
+    "mime": "audio/vnd.dts.hd",
+    "cat": "audio",
+    "desc": "DTS-HD 音频"
+  },
+  {
+    "ext": "weba",
+    "mime": "audio/webm",
+    "cat": "audio",
+    "desc": "WebM 音频"
+  },
+  {
+    "ext": "ra",
+    "mime": "audio/vnd.rn-realaudio",
+    "cat": "audio",
+    "desc": "RealAudio"
+  },
+  {
+    "ext": "ram",
+    "mime": "audio/vnd.rn-realaudio",
+    "cat": "audio",
+    "desc": "RealAudio 元文件"
+  },
+  {
+    "ext": "mid",
+    "mime": "audio/midi",
+    "cat": "audio",
+    "desc": "MIDI 音乐"
+  },
+  {
+    "ext": "midi",
+    "mime": "audio/midi",
+    "cat": "audio",
+    "desc": "MIDI 音乐"
+  },
+  {
+    "ext": "kar",
+    "mime": "audio/midi",
+    "cat": "audio",
+    "desc": "Karaoke MIDI"
+  },
+  {
+    "ext": "rmi",
+    "mime": "audio/midi",
+    "cat": "audio",
+    "desc": "RIFF MIDI"
+  },
+  {
+    "ext": "snd",
+    "mime": "audio/basic",
+    "cat": "audio",
+    "desc": "NeXT/Sun 音频"
+  },
+  {
+    "ext": "au",
+    "mime": "audio/basic",
+    "cat": "audio",
+    "desc": "Sun 音频"
+  },
+  {
+    "ext": "voc",
+    "mime": "audio/x-voc",
+    "cat": "audio",
+    "desc": "Creative VOC 音频"
+  },
+  {
+    "ext": "wv",
+    "mime": "audio/wavpack",
+    "cat": "audio",
+    "desc": "WavPack 音频"
+  },
+  {
+    "ext": "ape",
+    "mime": "audio/ape",
+    "cat": "audio",
+    "desc": "Monkey Audio"
+  },
+  {
+    "ext": "mka",
+    "mime": "audio/x-matroska",
+    "cat": "audio",
+    "desc": "Matroska 音频"
+  },
+  {
+    "ext": "mpc",
+    "mime": "audio/x-musepack",
+    "cat": "audio",
+    "desc": "Musepack 音频"
+  },
+  {
+    "ext": "mpp",
+    "mime": "audio/x-musepack",
+    "cat": "audio",
+    "desc": "Musepack 音频"
+  },
+  {
+    "ext": "spx",
+    "mime": "audio/ogg",
+    "cat": "audio",
+    "desc": "Ogg Speex"
+  },
+  {
+    "ext": "gsm",
+    "mime": "audio/x-gsm",
+    "cat": "audio",
+    "desc": "GSM 音频"
+  },
+  {
+    "ext": "amr",
+    "mime": "audio/amr",
+    "cat": "audio",
+    "desc": "AMR 语音"
+  },
+  {
+    "ext": "awb",
+    "mime": "audio/amr-wb",
+    "cat": "audio",
+    "desc": "AMR-WB 语音"
+  },
+  {
+    "ext": "dvf",
+    "mime": "audio/x-dvf",
+    "cat": "audio",
+    "desc": "Sony DV 音频"
+  },
+  {
+    "ext": "msv",
+    "mime": "audio/x-msv",
+    "cat": "audio",
+    "desc": "Sony Memory Stick 语音"
+  },
+  {
+    "ext": "dss",
+    "mime": "audio/x-dss",
+    "cat": "audio",
+    "desc": "Digital Speech Standard"
+  },
+  {
+    "ext": "xm",
+    "mime": "audio/xm",
+    "cat": "audio",
+    "desc": "FastTracker 模块"
+  },
+  {
+    "ext": "mod",
+    "mime": "audio/mod",
+    "cat": "audio",
+    "desc": "Amiga 模块音乐"
+  },
+  {
+    "ext": "s3m",
+    "mime": "audio/s3m",
+    "cat": "audio",
+    "desc": "Scream Tracker 3 模块"
+  },
+  {
+    "ext": "it",
+    "mime": "audio/it",
+    "cat": "audio",
+    "desc": "Impulse Tracker 模块"
+  },
+  {
+    "ext": "mt2",
+    "mime": "audio/mt2",
+    "cat": "audio",
+    "desc": "MadTracker 2 模块"
+  },
+  {
+    "ext": "umx",
+    "mime": "audio/x-umx",
+    "cat": "audio",
+    "desc": "Unreal 音乐包"
+  },
+  {
+    "ext": "mo3",
+    "mime": "audio/mo3",
+    "cat": "audio",
+    "desc": "MO3 模块"
+  },
+  {
+    "ext": "nsf",
+    "mime": "audio/nsf",
+    "cat": "audio",
+    "desc": "NES 音乐"
+  },
+  {
+    "ext": "gbs",
+    "mime": "audio/gbs",
+    "cat": "audio",
+    "desc": "Game Boy 音乐"
+  },
+  {
+    "ext": "vgm",
+    "mime": "audio/vgm",
+    "cat": "audio",
+    "desc": "Video Game Music"
+  },
+  {
+    "ext": "vgz",
+    "mime": "audio/vgm",
+    "cat": "audio",
+    "desc": "VGM 压缩格式"
+  },
+  {
+    "ext": "gym",
+    "mime": "audio/gym",
+    "cat": "audio",
+    "desc": "Genesis YM2612 音乐"
+  },
+  {
+    "ext": "spc",
+    "mime": "audio/spc",
+    "cat": "audio",
+    "desc": "SNES SPC700 音乐"
+  },
+  {
+    "ext": "psf",
+    "mime": "audio/psf",
+    "cat": "audio",
+    "desc": "PlayStation 音频"
+  },
+  {
+    "ext": "psf2",
+    "mime": "audio/psf2",
+    "cat": "audio",
+    "desc": "PlayStation 2 音频"
+  },
+  {
+    "ext": "ssf",
+    "mime": "audio/ssf",
+    "cat": "audio",
+    "desc": "Sega Saturn 音频"
+  },
+  {
+    "ext": "dsf",
+    "mime": "audio/dsf",
+    "cat": "audio",
+    "desc": "DSD 音频"
+  },
+  {
+    "ext": "dff",
+    "mime": "audio/dff",
+    "cat": "audio",
+    "desc": "DSDIFF 音频"
+  },
+  {
+    "ext": "m3u",
+    "mime": "audio/x-mpegurl",
+    "cat": "audio",
+    "desc": "M3U 播放列表"
+  },
+  {
+    "ext": "m3u8",
+    "mime": "application/vnd.apple.mpegurl",
+    "cat": "audio",
+    "desc": "UTF-8 M3U 播放列表"
+  },
+  {
+    "ext": "pls",
+    "mime": "audio/x-scpls",
+    "cat": "audio",
+    "desc": "PLS 播放列表"
+  },
+  {
+    "ext": "xspf",
+    "mime": "application/xspf+xml",
+    "cat": "audio",
+    "desc": "XSPF 播放列表"
+  },
+  {
+    "ext": "asx",
+    "mime": "video/x-ms-asf",
+    "cat": "audio",
+    "desc": "Windows Media 播放列表"
+  },
+  {
+    "ext": "wax",
+    "mime": "audio/x-ms-wax",
+    "cat": "audio",
+    "desc": "Windows Media Audio 重定向"
+  },
+  {
+    "ext": "cue",
+    "mime": "application/x-cue",
+    "cat": "audio",
+    "desc": "CUE 镜像索引"
+  },
+  {
+    "ext": "mp4",
+    "mime": "video/mp4",
+    "cat": "video",
+    "desc": "MP4 视频"
+  },
+  {
+    "ext": "m4v",
+    "mime": "video/mp4",
+    "cat": "video",
+    "desc": "MPEG-4 视频"
+  },
+  {
+    "ext": "mpg",
+    "mime": "video/mpeg",
+    "cat": "video",
+    "desc": "MPEG 视频"
+  },
+  {
+    "ext": "mpeg",
+    "mime": "video/mpeg",
+    "cat": "video",
+    "desc": "MPEG 视频"
+  },
+  {
+    "ext": "mp2",
+    "mime": "video/mpeg",
+    "cat": "video",
+    "desc": "MPEG-2 视频"
+  },
+  {
+    "ext": "mpe",
+    "mime": "video/mpeg",
+    "cat": "video",
+    "desc": "MPEG 视频"
+  },
+  {
+    "ext": "mpv",
+    "mime": "video/mp4",
+    "cat": "video",
+    "desc": "MPEG 视频"
+  },
+  {
+    "ext": "m2v",
+    "mime": "video/mpeg-2",
+    "cat": "video",
+    "desc": "MPEG-2 视频"
+  },
+  {
+    "ext": "mts",
+    "mime": "video/mp2t",
+    "cat": "video",
+    "desc": "AVCHD 视频"
+  },
+  {
+    "ext": "m2ts",
+    "mime": "video/mp2t",
+    "cat": "video",
+    "desc": "蓝光 MPEG-2 TS"
+  },
+  {
+    "ext": "qt",
+    "mime": "video/quicktime",
+    "cat": "video",
+    "desc": "QuickTime 视频"
+  },
+  {
+    "ext": "mov",
+    "mime": "video/quicktime",
+    "cat": "video",
+    "desc": "QuickTime 影片"
+  },
+  {
+    "ext": "avi",
+    "mime": "video/x-msvideo",
+    "cat": "video",
+    "desc": "AVI 视频"
+  },
+  {
+    "ext": "wmv",
+    "mime": "video/x-ms-wmv",
+    "cat": "video",
+    "desc": "Windows Media Video"
+  },
+  {
+    "ext": "asf",
+    "mime": "video/x-ms-asf",
+    "cat": "video",
+    "desc": "ASF 流媒体"
+  },
+  {
+    "ext": "flv",
+    "mime": "video/x-flv",
+    "cat": "video",
+    "desc": "Flash 视频"
+  },
+  {
+    "ext": "f4v",
+    "mime": "video/mp4",
+    "cat": "video",
+    "desc": "Flash MP4 视频"
+  },
+  {
+    "ext": "swf",
+    "mime": "application/x-shockwave-flash",
+    "cat": "video",
+    "desc": "Flash 动画"
+  },
+  {
+    "ext": "webm",
+    "mime": "video/webm",
+    "cat": "video",
+    "desc": "WebM 视频"
+  },
+  {
+    "ext": "mkv",
+    "mime": "video/x-matroska",
+    "cat": "video",
+    "desc": "Matroska 视频"
+  },
+  {
+    "ext": "ogv",
+    "mime": "video/ogg",
+    "cat": "video",
+    "desc": "Ogg 视频"
+  },
+  {
+    "ext": "rm",
+    "mime": "application/vnd.rn-realmedia",
+    "cat": "video",
+    "desc": "RealMedia"
+  },
+  {
+    "ext": "rmvb",
+    "mime": "application/vnd.rn-realmedia-vbr",
+    "cat": "video",
+    "desc": "RealMedia VBR"
+  },
+  {
+    "ext": "vob",
+    "mime": "video/dvd",
+    "cat": "video",
+    "desc": "DVD 视频对象"
+  },
+  {
+    "ext": "ifo",
+    "mime": "video/dvd",
+    "cat": "video",
+    "desc": "DVD 信息文件"
+  },
+  {
+    "ext": "bup",
+    "mime": "video/dvd",
+    "cat": "video",
+    "desc": "DVD 备份文件"
+  },
+  {
+    "ext": "divx",
+    "mime": "video/x-divx",
+    "cat": "video",
+    "desc": "DivX 视频"
+  },
+  {
+    "ext": "xvid",
+    "mime": "video/x-xvid",
+    "cat": "video",
+    "desc": "Xvid 视频"
+  },
+  {
+    "ext": "3gp",
+    "mime": "video/3gpp",
+    "cat": "video",
+    "desc": "3GPP 视频"
+  },
+  {
+    "ext": "3g2",
+    "mime": "video/3gpp2",
+    "cat": "video",
+    "desc": "3GPP2 视频"
+  },
+  {
+    "ext": "mxf",
+    "mime": "application/mxf",
+    "cat": "video",
+    "desc": "Material Exchange Format"
+  },
+  {
+    "ext": "nut",
+    "mime": "video/x-nut",
+    "cat": "video",
+    "desc": "NUT 视频"
+  },
+  {
+    "ext": "dv",
+    "mime": "video/dv",
+    "cat": "video",
+    "desc": "DV 视频"
+  },
+  {
+    "ext": "hdv",
+    "mime": "video/hdv",
+    "cat": "video",
+    "desc": "HDV 视频"
+  },
+  {
+    "ext": "fli",
+    "mime": "video/x-fli",
+    "cat": "video",
+    "desc": "FLI 动画"
+  },
+  {
+    "ext": "flc",
+    "mime": "video/x-flic",
+    "cat": "video",
+    "desc": "FLC 动画"
+  },
+  {
+    "ext": "gxf",
+    "mime": "application/gxf",
+    "cat": "video",
+    "desc": "General Exchange Format"
+  },
+  {
+    "ext": "mjpg",
+    "mime": "video/x-motion-jpeg",
+    "cat": "video",
+    "desc": "Motion JPEG"
+  },
+  {
+    "ext": "mjpeg",
+    "mime": "video/x-motion-jpeg",
+    "cat": "video",
+    "desc": "Motion JPEG"
+  },
+  {
+    "ext": "yuv",
+    "mime": "video/x-raw-yuv",
+    "cat": "video",
+    "desc": "YUV 原始视频"
+  },
+  {
+    "ext": "h264",
+    "mime": "video/h264",
+    "cat": "video",
+    "desc": "H.264 视频码流"
+  },
+  {
+    "ext": "hevc",
+    "mime": "video/hevc",
+    "cat": "video",
+    "desc": "H.265/HEVC 视频码流"
+  },
+  {
+    "ext": "vp8",
+    "mime": "video/vp8",
+    "cat": "video",
+    "desc": "VP8 视频"
+  },
+  {
+    "ext": "vp9",
+    "mime": "video/vp9",
+    "cat": "video",
+    "desc": "VP9 视频"
+  },
+  {
+    "ext": "av1",
+    "mime": "video/av1",
+    "cat": "video",
+    "desc": "AV1 视频"
+  },
+  {
+    "ext": "ivf",
+    "mime": "video/x-ivf",
+    "cat": "video",
+    "desc": "Indeo Video Format"
+  },
+  {
+    "ext": "ttf",
+    "mime": "font/ttf",
+    "cat": "font",
+    "desc": "TrueType 字体"
+  },
+  {
+    "ext": "otf",
+    "mime": "font/otf",
+    "cat": "font",
+    "desc": "OpenType 字体"
+  },
+  {
+    "ext": "woff",
+    "mime": "font/woff",
+    "cat": "font",
+    "desc": "Web Open Font Format"
+  },
+  {
+    "ext": "woff2",
+    "mime": "font/woff2",
+    "cat": "font",
+    "desc": "WOFF2 网页字体"
+  },
+  {
+    "ext": "eot",
+    "mime": "application/vnd.ms-fontobject",
+    "cat": "font",
+    "desc": "Embedded OpenType"
+  },
+  {
+    "ext": "sfnt",
+    "mime": "font/sfnt",
+    "cat": "font",
+    "desc": "SFNT 字体"
+  },
+  {
+    "ext": "pfb",
+    "mime": "application/x-font-type1",
+    "cat": "font",
+    "desc": "PostScript Type 1 字体"
+  },
+  {
+    "ext": "pfm",
+    "mime": "application/x-font-type1",
+    "cat": "font",
+    "desc": "PostScript Type 1 字体"
+  },
+  {
+    "ext": "afm",
+    "mime": "application/x-font-type1",
+    "cat": "font",
+    "desc": "Adobe 字体度量"
+  },
+  {
+    "ext": "amfm",
+    "mime": "application/x-font-type1",
+    "cat": "font",
+    "desc": "Adobe 多主字体度量"
+  },
+  {
+    "ext": "mmtf",
+    "mime": "application/x-font-type1",
+    "cat": "font",
+    "desc": "Multiple Master 字体"
+  },
+  {
+    "ext": "sfd",
+    "mime": "application/vnd.font-fontforge-sfd",
+    "cat": "font",
+    "desc": "FontForge 字体"
+  },
+  {
+    "ext": "fon",
+    "mime": "font/x-win-font",
+    "cat": "font",
+    "desc": "Windows 字体"
+  },
+  {
+    "ext": "fnt",
+    "mime": "font/x-win-font",
+    "cat": "font",
+    "desc": "Windows 字体"
+  },
+  {
+    "ext": "bdf",
+    "mime": "application/x-font-bdf",
+    "cat": "font",
+    "desc": "Bitmap Distribution Format"
+  },
+  {
+    "ext": "pcf",
+    "mime": "application/x-font-pcf",
+    "cat": "font",
+    "desc": "PCF 位图字体"
+  },
+  {
+    "ext": "snf",
+    "mime": "application/x-font-snf",
+    "cat": "font",
+    "desc": "SNF 位图字体"
+  },
+  {
+    "ext": "ttc",
+    "mime": "font/collection",
+    "cat": "font",
+    "desc": "TrueType 字体集"
+  },
+  {
+    "ext": "dfont",
+    "mime": "application/x-dfont",
+    "cat": "font",
+    "desc": "Mac OS X 数据fork字体"
+  },
+  {
+    "ext": "suit",
+    "mime": "application/x-suit",
+    "cat": "font",
+    "desc": "Classic Mac 字体"
+  },
+  {
+    "ext": "zip",
+    "mime": "application/zip",
+    "cat": "archive",
+    "desc": "ZIP 压缩包"
+  },
+  {
+    "ext": "rar",
+    "mime": "application/vnd.rar",
+    "cat": "archive",
+    "desc": "RAR 压缩包"
+  },
+  {
+    "ext": "rar4",
+    "mime": "application/x-rar-compressed",
+    "cat": "archive",
+    "desc": "RAR4 压缩包"
+  },
+  {
+    "ext": "7z",
+    "mime": "application/x-7z-compressed",
+    "cat": "archive",
+    "desc": "7-Zip 压缩包"
+  },
+  {
+    "ext": "tar",
+    "mime": "application/x-tar",
+    "cat": "archive",
+    "desc": "TAR 归档"
+  },
+  {
+    "ext": "gz",
+    "mime": "application/gzip",
+    "cat": "archive",
+    "desc": "Gzip 压缩"
+  },
+  {
+    "ext": "tgz",
+    "mime": "application/gzip",
+    "cat": "archive",
+    "desc": "tar + gzip"
+  },
+  {
+    "ext": "bz2",
+    "mime": "application/x-bzip2",
+    "cat": "archive",
+    "desc": "Bzip2 压缩"
+  },
+  {
+    "ext": "tbz",
+    "mime": "application/x-bzip2",
+    "cat": "archive",
+    "desc": "tar + bzip2"
+  },
+  {
+    "ext": "tbz2",
+    "mime": "application/x-bzip2",
+    "cat": "archive",
+    "desc": "tar + bzip2"
+  },
+  {
+    "ext": "xz",
+    "mime": "application/x-xz",
+    "cat": "archive",
+    "desc": "XZ 压缩"
+  },
+  {
+    "ext": "txz",
+    "mime": "application/x-xz",
+    "cat": "archive",
+    "desc": "tar + xz"
+  },
+  {
+    "ext": "lz",
+    "mime": "application/x-lzip",
+    "cat": "archive",
+    "desc": "Lzip 压缩"
+  },
+  {
+    "ext": "lzo",
+    "mime": "application/x-lzop",
+    "cat": "archive",
+    "desc": "Lzop 压缩"
+  },
+  {
+    "ext": "lzma",
+    "mime": "application/x-lzma",
+    "cat": "archive",
+    "desc": "LZMA 压缩"
+  },
+  {
+    "ext": "tlz",
+    "mime": "application/x-lzma",
+    "cat": "archive",
+    "desc": "tar + lzma"
+  },
+  {
+    "ext": "z",
+    "mime": "application/x-compress",
+    "cat": "archive",
+    "desc": "Unix compress"
+  },
+  {
+    "ext": "Z",
+    "mime": "application/x-compress",
+    "cat": "archive",
+    "desc": "Unix compress"
+  },
+  {
+    "ext": "cab",
+    "mime": "application/vnd.ms-cab-compressed",
+    "cat": "archive",
+    "desc": "Windows CAB"
+  },
+  {
+    "ext": "arj",
+    "mime": "application/x-arj",
+    "cat": "archive",
+    "desc": "ARJ 压缩"
+  },
+  {
+    "ext": "lzh",
+    "mime": "application/x-lzh-compressed",
+    "cat": "archive",
+    "desc": "LZH 压缩"
+  },
+  {
+    "ext": "lha",
+    "mime": "application/x-lzh-compressed",
+    "cat": "archive",
+    "desc": "LHA 压缩"
+  },
+  {
+    "ext": "ace",
+    "mime": "application/x-ace-compressed",
+    "cat": "archive",
+    "desc": "ACE 压缩"
+  },
+  {
+    "ext": "uha",
+    "mime": "application/x-uha-compressed",
+    "cat": "archive",
+    "desc": "UHARC 压缩"
+  },
+  {
+    "ext": "arc",
+    "mime": "application/x-arc-compressed",
+    "cat": "archive",
+    "desc": "ARC 压缩"
+  },
+  {
+    "ext": "zoo",
+    "mime": "application/x-zoo",
+    "cat": "archive",
+    "desc": "Zoo 压缩"
+  },
+  {
+    "ext": "pak",
+    "mime": "application/x-pak",
+    "cat": "archive",
+    "desc": "PAK 压缩"
+  },
+  {
+    "ext": "sqx",
+    "mime": "application/x-sqx",
+    "cat": "archive",
+    "desc": "SQX 压缩"
+  },
+  {
+    "ext": "alz",
+    "mime": "application/x-alz",
+    "cat": "archive",
+    "desc": "ALZip 压缩"
+  },
+  {
+    "ext": "egg",
+    "mime": "application/x-egg",
+    "cat": "archive",
+    "desc": "ALZip EGG"
+  },
+  {
+    "ext": "sit",
+    "mime": "application/x-stuffit",
+    "cat": "archive",
+    "desc": "StuffIt 压缩"
+  },
+  {
+    "ext": "sitx",
+    "mime": "application/x-stuffitx",
+    "cat": "archive",
+    "desc": "StuffIt X 压缩"
+  },
+  {
+    "ext": "sea",
+    "mime": "application/x-sea",
+    "cat": "archive",
+    "desc": "Self-Extracting Archive"
+  },
+  {
+    "ext": "dmg",
+    "mime": "application/x-apple-diskimage",
+    "cat": "archive",
+    "desc": "macOS 磁盘映像"
+  },
+  {
+    "ext": "iso",
+    "mime": "application/x-iso9660-image",
+    "cat": "archive",
+    "desc": "ISO 光盘映像"
+  },
+  {
+    "ext": "img",
+    "mime": "application/x-img",
+    "cat": "archive",
+    "desc": "磁盘映像"
+  },
+  {
+    "ext": "nrg",
+    "mime": "application/x-nrg",
+    "cat": "archive",
+    "desc": "Nero 光盘映像"
+  },
+  {
+    "ext": "mdf",
+    "mime": "application/x-mdf",
+    "cat": "archive",
+    "desc": " Alcohol 光盘映像"
+  },
+  {
+    "ext": "bin",
+    "mime": "application/octet-stream",
+    "cat": "archive",
+    "desc": "二进制数据"
+  },
+  {
+    "ext": "vcd",
+    "mime": "application/x-cdlink",
+    "cat": "archive",
+    "desc": "Virtual CD"
+  },
+  {
+    "ext": "cdi",
+    "mime": "application/x-cd-image",
+    "cat": "archive",
+    "desc": "DiscJuggler 映像"
+  },
+  {
+    "ext": "bwt",
+    "mime": "application/x-bwtorrent",
+    "cat": "archive",
+    "desc": "BlindWrite 映像"
+  },
+  {
+    "ext": "ccd",
+    "mime": "application/x-clonecd",
+    "cat": "archive",
+    "desc": "CloneCD 映像"
+  },
+  {
+    "ext": "mds",
+    "mime": "application/x-mds",
+    "cat": "archive",
+    "desc": "Media Descriptor 映像"
+  },
+  {
+    "ext": "b5t",
+    "mime": "application/x-b5t",
+    "cat": "archive",
+    "desc": "BlindWrite 5 映像"
+  },
+  {
+    "ext": "b6t",
+    "mime": "application/x-b6t",
+    "cat": "archive",
+    "desc": "BlindWrite 6 映像"
+  },
+  {
+    "ext": "isz",
+    "mime": "application/x-isz",
+    "cat": "archive",
+    "desc": "ISO Zipped 映像"
+  },
+  {
+    "ext": "daa",
+    "mime": "application/x-daa",
+    "cat": "archive",
+    "desc": "PowerISO 映像"
+  },
+  {
+    "ext": "uif",
+    "mime": "application/x-uif",
+    "cat": "archive",
+    "desc": "MagicISO 映像"
+  },
+  {
+    "ext": "wim",
+    "mime": "application/x-ms-wim",
+    "cat": "archive",
+    "desc": "Windows 映像格式"
+  },
+  {
+    "ext": "swm",
+    "mime": "application/x-ms-wim",
+    "cat": "archive",
+    "desc": "WIM 拆分文件"
+  },
+  {
+    "ext": "esd",
+    "mime": "application/x-ms-esd",
+    "cat": "archive",
+    "desc": "Windows ESD 映像"
+  },
+  {
+    "ext": "rpm",
+    "mime": "application/x-rpm",
+    "cat": "archive",
+    "desc": "RPM 软件包"
+  },
+  {
+    "ext": "deb",
+    "mime": "application/vnd.debian.binary-package",
+    "cat": "archive",
+    "desc": "Debian 软件包"
+  },
+  {
+    "ext": "apk",
+    "mime": "application/vnd.android.package-archive",
+    "cat": "archive",
+    "desc": "Android 安装包"
+  },
+  {
+    "ext": "ipa",
+    "mime": "application/octet-stream",
+    "cat": "archive",
+    "desc": "iOS 安装包"
+  },
+  {
+    "ext": "xapk",
+    "mime": "application/vnd.android.package-archive",
+    "cat": "archive",
+    "desc": "Android 扩展安装包"
+  },
+  {
+    "ext": "apkm",
+    "mime": "application/vnd.android.package-archive",
+    "cat": "archive",
+    "desc": "Android App Bundle 安装包"
+  },
+  {
+    "ext": "apks",
+    "mime": "application/vnd.android.package-archive",
+    "cat": "archive",
+    "desc": "Android Split APK"
+  },
+  {
+    "ext": "aab",
+    "mime": "application/vnd.android.package-archive",
+    "cat": "archive",
+    "desc": "Android App Bundle"
+  },
+  {
+    "ext": "msi",
+    "mime": "application/x-msdownload",
+    "cat": "archive",
+    "desc": "Windows Installer"
+  },
+  {
+    "ext": "msix",
+    "mime": "application/msix",
+    "cat": "archive",
+    "desc": "MSIX 安装包"
+  },
+  {
+    "ext": "appx",
+    "mime": "application/appx",
+    "cat": "archive",
+    "desc": "Windows AppX 包"
+  },
+  {
+    "ext": "appxbundle",
+    "mime": "application/appxbundle",
+    "cat": "archive",
+    "desc": "AppX 捆绑包"
+  },
+  {
+    "ext": "msixbundle",
+    "mime": "application/msixbundle",
+    "cat": "archive",
+    "desc": "MSIX 捆绑包"
+  },
+  {
+    "ext": "nupkg",
+    "mime": "application/zip",
+    "cat": "archive",
+    "desc": "NuGet 包"
+  },
+  {
+    "ext": "pkg",
+    "mime": "application/octet-stream",
+    "cat": "archive",
+    "desc": "macOS/Windows 安装包"
+  },
+  {
+    "ext": "hqx",
+    "mime": "application/mac-binhex40",
+    "cat": "archive",
+    "desc": "BinHex 编码"
+  },
+  {
+    "ext": "binhex",
+    "mime": "application/mac-binhex40",
+    "cat": "archive",
+    "desc": "BinHex 编码"
+  },
+  {
+    "ext": "cpt",
+    "mime": "application/mac-compactpro",
+    "cat": "archive",
+    "desc": "Compact Pro 压缩"
+  },
+  {
+    "ext": "smzip",
+    "mime": "application/x-smzip",
+    "cat": "archive",
+    "desc": "StepMania 压缩包"
+  },
+  {
+    "ext": "kmz",
+    "mime": "application/vnd.google-earth.kmz",
+    "cat": "archive",
+    "desc": "Google Earth KMZ"
+  },
+  {
+    "ext": "xpi",
+    "mime": "application/x-xpinstall",
+    "cat": "archive",
+    "desc": "Firefox 扩展安装包"
+  },
+  {
+    "ext": "jar",
+    "mime": "application/java-archive",
+    "cat": "archive",
+    "desc": "Java 归档"
+  },
+  {
+    "ext": "war",
+    "mime": "application/java-archive",
+    "cat": "archive",
+    "desc": "Java Web 归档"
+  },
+  {
+    "ext": "ear",
+    "mime": "application/java-archive",
+    "cat": "archive",
+    "desc": "Java EE 企业归档"
+  },
+  {
+    "ext": "zipx",
+    "mime": "application/x-zipx",
+    "cat": "archive",
+    "desc": "WinZip 扩展压缩"
+  },
+  {
+    "ext": "zst",
+    "mime": "application/zstd",
+    "cat": "archive",
+    "desc": "Zstandard 压缩"
+  },
+  {
+    "ext": "tzst",
+    "mime": "application/zstd",
+    "cat": "archive",
+    "desc": "tar + zstd"
+  },
+  {
+    "ext": "py",
+    "mime": "text/x-python",
+    "cat": "code",
+    "desc": "Python 源代码"
+  },
+  {
+    "ext": "pyc",
+    "mime": "application/x-python-code",
+    "cat": "code",
+    "desc": "Python 字节码"
+  },
+  {
+    "ext": "pyo",
+    "mime": "application/x-python-code",
+    "cat": "code",
+    "desc": "Python 优化字节码"
+  },
+  {
+    "ext": "pyw",
+    "mime": "text/x-python",
+    "cat": "code",
+    "desc": "Python Windows 脚本"
+  },
+  {
+    "ext": "pyi",
+    "mime": "text/x-python",
+    "cat": "code",
+    "desc": "Python 类型存根"
+  },
+  {
+    "ext": "pyd",
+    "mime": "application/x-py",
+    "cat": "code",
+    "desc": "Python 扩展模块"
+  },
+  {
+    "ext": "ipynb",
+    "mime": "application/x-ipynb+json",
+    "cat": "code",
+    "desc": "Jupyter Notebook"
+  },
+  {
+    "ext": "rb",
+    "mime": "text/x-ruby",
+    "cat": "code",
+    "desc": "Ruby 源代码"
+  },
+  {
+    "ext": "erb",
+    "mime": "application/x-erb",
+    "cat": "code",
+    "desc": "Ruby ERB 模板"
+  },
+  {
+    "ext": "rbw",
+    "mime": "text/x-ruby",
+    "cat": "code",
+    "desc": "Ruby Windows 脚本"
+  },
+  {
+    "ext": "gemspec",
+    "mime": "text/x-ruby",
+    "cat": "code",
+    "desc": "Ruby Gem 规范"
+  },
+  {
+    "ext": "rake",
+    "mime": "text/x-ruby",
+    "cat": "code",
+    "desc": "Rake 构建脚本"
+  },
+  {
+    "ext": "php",
+    "mime": "application/x-httpd-php",
+    "cat": "code",
+    "desc": "PHP 脚本"
+  },
+  {
+    "ext": "phtml",
+    "mime": "application/x-httpd-php",
+    "cat": "code",
+    "desc": "PHP 网页"
+  },
+  {
+    "ext": "php3",
+    "mime": "application/x-httpd-php",
+    "cat": "code",
+    "desc": "PHP 3 脚本"
+  },
+  {
+    "ext": "php4",
+    "mime": "application/x-httpd-php",
+    "cat": "code",
+    "desc": "PHP 4 脚本"
+  },
+  {
+    "ext": "php5",
+    "mime": "application/x-httpd-php",
+    "cat": "code",
+    "desc": "PHP 5 脚本"
+  },
+  {
+    "ext": "php7",
+    "mime": "application/x-httpd-php",
+    "cat": "code",
+    "desc": "PHP 7 脚本"
+  },
+  {
+    "ext": "phps",
+    "mime": "application/x-httpd-php",
+    "cat": "code",
+    "desc": "PHP 源代码高亮"
+  },
+  {
+    "ext": "phar",
+    "mime": "application/x-phar",
+    "cat": "code",
+    "desc": "PHP 归档"
+  },
+  {
+    "ext": "inc",
+    "mime": "text/x-php",
+    "cat": "code",
+    "desc": "PHP 包含文件"
+  },
+  {
+    "ext": "java",
+    "mime": "text/x-java-source",
+    "cat": "code",
+    "desc": "Java 源代码"
+  },
+  {
+    "ext": "class",
+    "mime": "application/java-vm",
+    "cat": "code",
+    "desc": "Java 字节码"
+  },
+  {
+    "ext": "jsp",
+    "mime": "text/x-java-source",
+    "cat": "code",
+    "desc": "JavaServer Pages"
+  },
+  {
+    "ext": "jspx",
+    "mime": "text/x-java-source",
+    "cat": "code",
+    "desc": "JSP XML 语法"
+  },
+  {
+    "ext": "kt",
+    "mime": "text/x-kotlin",
+    "cat": "code",
+    "desc": "Kotlin 源代码"
+  },
+  {
+    "ext": "kts",
+    "mime": "text/x-kotlin",
+    "cat": "code",
+    "desc": "Kotlin 脚本"
+  },
+  {
+    "ext": "scala",
+    "mime": "text/x-scala",
+    "cat": "code",
+    "desc": "Scala 源代码"
+  },
+  {
+    "ext": "sc",
+    "mime": "text/x-scala",
+    "cat": "code",
+    "desc": "Scala 脚本"
+  },
+  {
+    "ext": "go",
+    "mime": "text/x-go",
+    "cat": "code",
+    "desc": "Go 源代码"
+  },
+  {
+    "ext": "c",
+    "mime": "text/x-c",
+    "cat": "code",
+    "desc": "C 源代码"
+  },
+  {
+    "ext": "h",
+    "mime": "text/x-chdr",
+    "cat": "code",
+    "desc": "C 头文件"
+  },
+  {
+    "ext": "cpp",
+    "mime": "text/x-c++",
+    "cat": "code",
+    "desc": "C++ 源代码"
+  },
+  {
+    "ext": "cc",
+    "mime": "text/x-c++",
+    "cat": "code",
+    "desc": "C++ 源代码"
+  },
+  {
+    "ext": "cxx",
+    "mime": "text/x-c++",
+    "cat": "code",
+    "desc": "C++ 源代码"
+  },
+  {
+    "ext": "c++",
+    "mime": "text/x-c++",
+    "cat": "code",
+    "desc": "C++ 源代码"
+  },
+  {
+    "ext": "hh",
+    "mime": "text/x-c++hdr",
+    "cat": "code",
+    "desc": "C++ 头文件"
+  },
+  {
+    "ext": "hpp",
+    "mime": "text/x-c++hdr",
+    "cat": "code",
+    "desc": "C++ 头文件"
+  },
+  {
+    "ext": "hxx",
+    "mime": "text/x-c++hdr",
+    "cat": "code",
+    "desc": "C++ 头文件"
+  },
+  {
+    "ext": "cs",
+    "mime": "text/x-csharp",
+    "cat": "code",
+    "desc": "C# 源代码"
+  },
+  {
+    "ext": "csx",
+    "mime": "text/x-csharp",
+    "cat": "code",
+    "desc": "C# 脚本"
+  },
+  {
+    "ext": "fs",
+    "mime": "text/x-fsharp",
+    "cat": "code",
+    "desc": "F# 源代码"
+  },
+  {
+    "ext": "fsx",
+    "mime": "text/x-fsharp",
+    "cat": "code",
+    "desc": "F# 脚本"
+  },
+  {
+    "ext": "vb",
+    "mime": "text/x-vb",
+    "cat": "code",
+    "desc": "Visual Basic 源代码"
+  },
+  {
+    "ext": "vbs",
+    "mime": "text/vbscript",
+    "cat": "code",
+    "desc": "VBScript"
+  },
+  {
+    "ext": "asp",
+    "mime": "text/asp",
+    "cat": "code",
+    "desc": "Active Server Pages"
+  },
+  {
+    "ext": "aspx",
+    "mime": "text/asp",
+    "cat": "code",
+    "desc": "ASP.NET 页面"
+  },
+  {
+    "ext": "cshtml",
+    "mime": "text/x-cshtml",
+    "cat": "code",
+    "desc": "ASP.NET MVC Razor"
+  },
+  {
+    "ext": "vbhtml",
+    "mime": "text/x-vbhtml",
+    "cat": "code",
+    "desc": "ASP.NET VB Razor"
+  },
+  {
+    "ext": "js",
+    "mime": "text/javascript",
+    "cat": "code",
+    "desc": "JavaScript 源代码"
+  },
+  {
+    "ext": "mjs",
+    "mime": "text/javascript",
+    "cat": "code",
+    "desc": "ES Module JavaScript"
+  },
+  {
+    "ext": "cjs",
+    "mime": "text/javascript",
+    "cat": "code",
+    "desc": "CommonJS JavaScript"
+  },
+  {
+    "ext": "jsx",
+    "mime": "text/jsx",
+    "cat": "code",
+    "desc": "React JSX"
+  },
+  {
+    "ext": "ts",
+    "mime": "text/typescript",
+    "cat": "code",
+    "desc": "TypeScript 源代码"
+  },
+  {
+    "ext": "tsx",
+    "mime": "text/tsx",
+    "cat": "code",
+    "desc": "React TSX"
+  },
+  {
+    "ext": "coffee",
+    "mime": "text/coffeescript",
+    "cat": "code",
+    "desc": "CoffeeScript"
+  },
+  {
+    "ext": "litcoffee",
+    "mime": "text/coffeescript",
+    "cat": "code",
+    "desc": "Literate CoffeeScript"
+  },
+  {
+    "ext": "swift",
+    "mime": "text/x-swift",
+    "cat": "code",
+    "desc": "Swift 源代码"
+  },
+  {
+    "ext": "m",
+    "mime": "text/x-objective-c",
+    "cat": "code",
+    "desc": "Objective-C 源代码"
+  },
+  {
+    "ext": "mm",
+    "mime": "text/x-objective-c++",
+    "cat": "code",
+    "desc": "Objective-C++ 源代码"
+  },
+  {
+    "ext": "r",
+    "mime": "text/x-r",
+    "cat": "code",
+    "desc": "R 源代码"
+  },
+  {
+    "ext": "rmd",
+    "mime": "text/x-r-markdown",
+    "cat": "code",
+    "desc": "R Markdown"
+  },
+  {
+    "ext": "rs",
+    "mime": "text/x-rust",
+    "cat": "code",
+    "desc": "Rust 源代码"
+  },
+  {
+    "ext": "rlib",
+    "mime": "text/x-rust",
+    "cat": "code",
+    "desc": "Rust 库"
+  },
+  {
+    "ext": "dart",
+    "mime": "application/dart",
+    "cat": "code",
+    "desc": "Dart 源代码"
+  },
+  {
+    "ext": "jl",
+    "mime": "text/julia",
+    "cat": "code",
+    "desc": "Julia 源代码"
+  },
+  {
+    "ext": "lua",
+    "mime": "text/x-lua",
+    "cat": "code",
+    "desc": "Lua 源代码"
+  },
+  {
+    "ext": "pl",
+    "mime": "text/x-perl",
+    "cat": "code",
+    "desc": "Perl 脚本"
+  },
+  {
+    "ext": "pm",
+    "mime": "text/x-perl",
+    "cat": "code",
+    "desc": "Perl 模块"
+  },
+  {
+    "ext": "t",
+    "mime": "text/x-perl",
+    "cat": "code",
+    "desc": "Perl 测试文件"
+  },
+  {
+    "ext": "pod",
+    "mime": "text/x-perl",
+    "cat": "code",
+    "desc": "Perl POD 文档"
+  },
+  {
+    "ext": "sh",
+    "mime": "application/x-sh",
+    "cat": "code",
+    "desc": "Shell 脚本"
+  },
+  {
+    "ext": "bash",
+    "mime": "application/x-sh",
+    "cat": "code",
+    "desc": "Bash 脚本"
+  },
+  {
+    "ext": "zsh",
+    "mime": "text/x-zsh",
+    "cat": "code",
+    "desc": "Zsh 脚本"
+  },
+  {
+    "ext": "csh",
+    "mime": "application/x-csh",
+    "cat": "code",
+    "desc": "C Shell 脚本"
+  },
+  {
+    "ext": "tcsh",
+    "mime": "application/x-csh",
+    "cat": "code",
+    "desc": "TC Shell 脚本"
+  },
+  {
+    "ext": "ksh",
+    "mime": "application/x-ksh",
+    "cat": "code",
+    "desc": "Korn Shell 脚本"
+  },
+  {
+    "ext": "fish",
+    "mime": "application/x-fish",
+    "cat": "code",
+    "desc": "Fish Shell 脚本"
+  },
+  {
+    "ext": "ps1",
+    "mime": "application/x-powershell",
+    "cat": "code",
+    "desc": "PowerShell 脚本"
+  },
+  {
+    "ext": "psd1",
+    "mime": "application/x-powershell",
+    "cat": "code",
+    "desc": "PowerShell 数据文件"
+  },
+  {
+    "ext": "psm1",
+    "mime": "application/x-powershell",
+    "cat": "code",
+    "desc": "PowerShell 模块"
+  },
+  {
+    "ext": "ps1xml",
+    "mime": "application/x-powershell",
+    "cat": "code",
+    "desc": "PowerShell XML"
+  },
+  {
+    "ext": "cmd",
+    "mime": "text/cmd",
+    "cat": "code",
+    "desc": "Windows 命令脚本"
+  },
+  {
+    "ext": "bat",
+    "mime": "application/x-msdownload",
+    "cat": "code",
+    "desc": "Windows 批处理"
+  },
+  {
+    "ext": "com",
+    "mime": "application/x-msdownload",
+    "cat": "code",
+    "desc": "DOS 可执行文件"
+  },
+  {
+    "ext": "exe",
+    "mime": "application/x-msdownload",
+    "cat": "code",
+    "desc": "Windows 可执行文件"
+  },
+  {
+    "ext": "dll",
+    "mime": "application/x-msdownload",
+    "cat": "code",
+    "desc": "Windows 动态链接库"
+  },
+  {
+    "ext": "so",
+    "mime": "application/x-sharedlib",
+    "cat": "code",
+    "desc": "Linux 共享库"
+  },
+  {
+    "ext": "dylib",
+    "mime": "application/x-dylib",
+    "cat": "code",
+    "desc": "macOS 动态库"
+  },
+  {
+    "ext": "o",
+    "mime": "application/x-object",
+    "cat": "code",
+    "desc": "目标文件"
+  },
+  {
+    "ext": "a",
+    "mime": "application/x-archive",
+    "cat": "code",
+    "desc": "静态库归档"
+  },
+  {
+    "ext": "lib",
+    "mime": "application/x-archive",
+    "cat": "code",
+    "desc": "静态库"
+  },
+  {
+    "ext": "nasm",
+    "mime": "text/x-nasm",
+    "cat": "code",
+    "desc": "NASM 汇编"
+  },
+  {
+    "ext": "asm",
+    "mime": "text/x-asm",
+    "cat": "code",
+    "desc": "汇编源代码"
+  },
+  {
+    "ext": "s",
+    "mime": "text/x-asm",
+    "cat": "code",
+    "desc": "汇编源代码"
+  },
+  {
+    "ext": "makefile",
+    "mime": "text/x-makefile",
+    "cat": "code",
+    "desc": "Makefile"
+  },
+  {
+    "ext": "cmake",
+    "mime": "text/x-cmake",
+    "cat": "code",
+    "desc": "CMake 配置"
+  },
+  {
+    "ext": "dockerfile",
+    "mime": "text/x-dockerfile",
+    "cat": "code",
+    "desc": "Docker 构建文件"
+  },
+  {
+    "ext": "css",
+    "mime": "text/css",
+    "cat": "code",
+    "desc": "CSS 样式表"
+  },
+  {
+    "ext": "ini",
+    "mime": "text/x-ini",
+    "cat": "code",
+    "desc": "INI 配置文件"
+  },
+  {
+    "ext": "cfg",
+    "mime": "text/x-config",
+    "cat": "code",
+    "desc": "配置文件"
+  },
+  {
+    "ext": "config",
+    "mime": "text/x-config",
+    "cat": "code",
+    "desc": "配置文件"
+  },
+  {
+    "ext": "properties",
+    "mime": "text/x-java-properties",
+    "cat": "code",
+    "desc": "Java 属性文件"
+  },
+  {
+    "ext": "prop",
+    "mime": "text/x-java-properties",
+    "cat": "code",
+    "desc": "属性文件"
+  },
+  {
+    "ext": "gradle",
+    "mime": "text/x-gradle",
+    "cat": "code",
+    "desc": "Gradle 构建脚本"
+  },
+  {
+    "ext": "pom",
+    "mime": "text/xml",
+    "cat": "code",
+    "desc": "Maven POM"
+  },
+  {
+    "ext": "yaml",
+    "mime": "application/x-yaml",
+    "cat": "code",
+    "desc": "YAML 数据"
+  },
+  {
+    "ext": "yml",
+    "mime": "application/x-yaml",
+    "cat": "code",
+    "desc": "YAML 数据"
+  },
+  {
+    "ext": "toml",
+    "mime": "application/toml",
+    "cat": "code",
+    "desc": "TOML 配置"
+  },
+  {
+    "ext": "hql",
+    "mime": "application/sql",
+    "cat": "code",
+    "desc": "Hive Query Language"
+  },
+  {
+    "ext": "cql",
+    "mime": "application/sql",
+    "cat": "code",
+    "desc": "Cassandra CQL"
+  },
+  {
+    "ext": "graphql",
+    "mime": "application/graphql",
+    "cat": "code",
+    "desc": "GraphQL 查询"
+  },
+  {
+    "ext": "gql",
+    "mime": "application/graphql",
+    "cat": "code",
+    "desc": "GraphQL 查询"
+  },
+  {
+    "ext": "prisma",
+    "mime": "application/x-prisma",
+    "cat": "code",
+    "desc": "Prisma Schema"
+  },
+  {
+    "ext": "proto",
+    "mime": "application/x-protobuf",
+    "cat": "code",
+    "desc": "Protocol Buffers"
+  },
+  {
+    "ext": "thrift",
+    "mime": "application/x-thrift",
+    "cat": "code",
+    "desc": "Apache Thrift IDL"
+  },
+  {
+    "ext": "avsc",
+    "mime": "application/json",
+    "cat": "code",
+    "desc": "Avro Schema"
+  },
+  {
+    "ext": "json5",
+    "mime": "application/json5",
+    "cat": "code",
+    "desc": "JSON5 数据"
+  },
+  {
+    "ext": "jsonc",
+    "mime": "application/json",
+    "cat": "code",
+    "desc": "JSON with Comments"
+  },
+  {
+    "ext": "hjson",
+    "mime": "text/hjson",
+    "cat": "code",
+    "desc": "HJSON 数据"
+  },
+  {
+    "ext": "jq",
+    "mime": "application/jq",
+    "cat": "code",
+    "desc": "jq 过滤脚本"
+  },
+  {
+    "ext": "liquid",
+    "mime": "application/liquid",
+    "cat": "code",
+    "desc": "Liquid 模板"
+  },
+  {
+    "ext": "mustache",
+    "mime": "text/x-mustache",
+    "cat": "code",
+    "desc": "Mustache 模板"
+  },
+  {
+    "ext": "hbs",
+    "mime": "text/x-handlebars-template",
+    "cat": "code",
+    "desc": "Handlebars 模板"
+  },
+  {
+    "ext": "handlebars",
+    "mime": "text/x-handlebars-template",
+    "cat": "code",
+    "desc": "Handlebars 模板"
+  },
+  {
+    "ext": "ejs",
+    "mime": "text/x-ejs",
+    "cat": "code",
+    "desc": "EJS 模板"
+  },
+  {
+    "ext": "jade",
+    "mime": "text/jade",
+    "cat": "code",
+    "desc": "Jade/Pug 模板"
+  },
+  {
+    "ext": "pug",
+    "mime": "text/jade",
+    "cat": "code",
+    "desc": "Pug 模板"
+  },
+  {
+    "ext": "slim",
+    "mime": "text/slim",
+    "cat": "code",
+    "desc": "Slim 模板"
+  },
+  {
+    "ext": "haml",
+    "mime": "text/haml",
+    "cat": "code",
+    "desc": "Haml 模板"
+  },
+  {
+    "ext": "vue",
+    "mime": "text/x-vue",
+    "cat": "code",
+    "desc": "Vue 单文件组件"
+  },
+  {
+    "ext": "svelte",
+    "mime": "text/x-svelte",
+    "cat": "code",
+    "desc": "Svelte 组件"
+  },
+  {
+    "ext": "astro",
+    "mime": "text/x-astro",
+    "cat": "code",
+    "desc": "Astro 组件"
+  },
+  {
+    "ext": "env",
+    "mime": "text/x-env",
+    "cat": "code",
+    "desc": "环境变量文件"
+  },
+  {
+    "ext": "dotenv",
+    "mime": "text/x-env",
+    "cat": "code",
+    "desc": "环境变量文件"
+  },
+  {
+    "ext": "types",
+    "mime": "text/plain",
+    "cat": "code",
+    "desc": "类型定义清单"
+  },
+  {
+    "ext": "reg",
+    "mime": "text/x-windows-registry",
+    "cat": "code",
+    "desc": "Windows 注册表文件"
+  },
+  {
+    "ext": "plist",
+    "mime": "application/x-plist",
+    "cat": "code",
+    "desc": "Apple 属性列表"
+  },
+  {
+    "ext": "url",
+    "mime": "application/x-url",
+    "cat": "code",
+    "desc": "Internet 快捷方式"
+  },
+  {
+    "ext": "uri",
+    "mime": "text/x-uri",
+    "cat": "code",
+    "desc": "URI 快捷方式"
+  },
+  {
+    "ext": "urn",
+    "mime": "text/x-uri",
+    "cat": "code",
+    "desc": "URN 引用文件"
+  },
+  {
+    "ext": "json",
+    "mime": "application/json",
+    "cat": "data",
+    "desc": "JSON 数据"
+  },
+  {
+    "ext": "xml",
+    "mime": "application/xml",
+    "cat": "data",
+    "desc": "XML 数据"
+  },
+  {
+    "ext": "csv",
+    "mime": "text/csv",
+    "cat": "data",
+    "desc": "CSV 逗号分隔值"
+  },
+  {
+    "ext": "tsv",
+    "mime": "text/tab-separated-values",
+    "cat": "data",
+    "desc": "TSV 制表分隔值"
+  },
+  {
+    "ext": "sql",
+    "mime": "application/sql",
+    "cat": "data",
+    "desc": "SQL 脚本"
+  },
+  {
+    "ext": "db",
+    "mime": "application/x-sqlite3",
+    "cat": "data",
+    "desc": "SQLite 数据库"
+  },
+  {
+    "ext": "sqlite",
+    "mime": "application/x-sqlite3",
+    "cat": "data",
+    "desc": "SQLite 数据库"
+  },
+  {
+    "ext": "sqlite3",
+    "mime": "application/x-sqlite3",
+    "cat": "data",
+    "desc": "SQLite 数据库"
+  },
+  {
+    "ext": "dbf",
+    "mime": "application/x-dbf",
+    "cat": "data",
+    "desc": "dBase 数据库"
+  },
+  {
+    "ext": "mdb",
+    "mime": "application/x-msaccess",
+    "cat": "data",
+    "desc": "Microsoft Access 数据库"
+  },
+  {
+    "ext": "accdb",
+    "mime": "application/x-msaccess",
+    "cat": "data",
+    "desc": "Access 2007+ 数据库"
+  },
+  {
+    "ext": "ndjson",
+    "mime": "application/x-ndjson",
+    "cat": "data",
+    "desc": "Newline Delimited JSON"
+  },
+  {
+    "ext": "jsonl",
+    "mime": "application/x-ndjson",
+    "cat": "data",
+    "desc": "JSON Lines"
+  },
+  {
+    "ext": "avro",
+    "mime": "application/avro",
+    "cat": "data",
+    "desc": "Apache Avro 数据"
+  },
+  {
+    "ext": "parquet",
+    "mime": "application/octet-stream",
+    "cat": "data",
+    "desc": "Apache Parquet 列式存储"
+  },
+  {
+    "ext": "orc",
+    "mime": "application/octet-stream",
+    "cat": "data",
+    "desc": "Apache ORC 列式存储"
+  },
+  {
+    "ext": "protobuf",
+    "mime": "application/protobuf",
+    "cat": "data",
+    "desc": "Protocol Buffers 二进制"
+  },
+  {
+    "ext": "msgpack",
+    "mime": "application/msgpack",
+    "cat": "data",
+    "desc": "MessagePack 数据"
+  },
+  {
+    "ext": "bson",
+    "mime": "application/bson",
+    "cat": "data",
+    "desc": "BSON 二进制 JSON"
+  },
+  {
+    "ext": "dat",
+    "mime": "application/octet-stream",
+    "cat": "data",
+    "desc": "通用数据文件"
+  },
+  {
+    "ext": "data",
+    "mime": "application/octet-stream",
+    "cat": "data",
+    "desc": "通用数据文件"
+  },
+  {
+    "ext": "cache",
+    "mime": "application/octet-stream",
+    "cat": "data",
+    "desc": "缓存数据"
+  },
+  {
+    "ext": "idx",
+    "mime": "application/octet-stream",
+    "cat": "data",
+    "desc": "索引数据"
+  },
+  {
+    "ext": "rss",
+    "mime": "application/rss+xml",
+    "cat": "data",
+    "desc": "RSS 订阅"
+  },
+  {
+    "ext": "atom",
+    "mime": "application/atom+xml",
+    "cat": "data",
+    "desc": "Atom 订阅"
+  },
+  {
+    "ext": "feed",
+    "mime": "application/atom+xml",
+    "cat": "data",
+    "desc": "Web Feed"
+  },
+  {
+    "ext": "opml",
+    "mime": "text/x-opml+xml",
+    "cat": "data",
+    "desc": "OPML 订阅列表"
+  },
+  {
+    "ext": "rdf",
+    "mime": "application/rdf+xml",
+    "cat": "data",
+    "desc": "RDF 数据"
+  },
+  {
+    "ext": "owl",
+    "mime": "application/rdf+xml",
+    "cat": "data",
+    "desc": "Web Ontology Language"
+  },
+  {
+    "ext": "ttl",
+    "mime": "text/turtle",
+    "cat": "data",
+    "desc": "Turtle RDF"
+  },
+  {
+    "ext": "n3",
+    "mime": "text/n3",
+    "cat": "data",
+    "desc": "Notation3 RDF"
+  },
+  {
+    "ext": "nt",
+    "mime": "application/n-triples",
+    "cat": "data",
+    "desc": "N-Triples RDF"
+  },
+  {
+    "ext": "trig",
+    "mime": "application/trig",
+    "cat": "data",
+    "desc": "TriG RDF"
+  },
+  {
+    "ext": "jsonld",
+    "mime": "application/ld+json",
+    "cat": "data",
+    "desc": "JSON-LD 数据"
+  },
+  {
+    "ext": "geojson",
+    "mime": "application/geo+json",
+    "cat": "data",
+    "desc": "GeoJSON 地理数据"
+  },
+  {
+    "ext": "topojson",
+    "mime": "application/topo+json",
+    "cat": "data",
+    "desc": "TopoJSON 拓扑数据"
+  },
+  {
+    "ext": "sitemap",
+    "mime": "application/xml",
+    "cat": "data",
+    "desc": "XML 站点地图"
+  },
+  {
+    "ext": "xsd",
+    "mime": "application/xml",
+    "cat": "data",
+    "desc": "XML Schema"
+  },
+  {
+    "ext": "dtd",
+    "mime": "application/xml-dtd",
+    "cat": "data",
+    "desc": "文档类型定义"
+  },
+  {
+    "ext": "xsl",
+    "mime": "application/xml",
+    "cat": "data",
+    "desc": "XSL 样式表"
+  },
+  {
+    "ext": "xslt",
+    "mime": "application/xslt+xml",
+    "cat": "data",
+    "desc": "XSLT 转换"
+  },
+  {
+    "ext": "wsdl",
+    "mime": "application/wsdl+xml",
+    "cat": "data",
+    "desc": "WSDL 描述"
+  },
+  {
+    "ext": "soap",
+    "mime": "application/soap+xml",
+    "cat": "data",
+    "desc": "SOAP 消息"
+  },
+  {
+    "ext": "wadl",
+    "mime": "application/wadl+xml",
+    "cat": "data",
+    "desc": "WADL 描述"
+  },
+  {
+    "ext": "swagger",
+    "mime": "application/json",
+    "cat": "data",
+    "desc": "Swagger 文档"
+  },
+  {
+    "ext": "openapi",
+    "mime": "application/json",
+    "cat": "data",
+    "desc": "OpenAPI 规范"
+  },
+  {
+    "ext": "postman",
+    "mime": "application/json",
+    "cat": "data",
+    "desc": "Postman 集合"
+  },
+  {
+    "ext": "collection",
+    "mime": "application/json",
+    "cat": "data",
+    "desc": "API 集合"
+  },
+  {
+    "ext": "har",
+    "mime": "application/har+json",
+    "cat": "data",
+    "desc": "HTTP Archive"
+  },
+  {
+    "ext": "curl",
+    "mime": "text/plain",
+    "cat": "data",
+    "desc": "cURL 命令"
+  },
+  {
+    "ext": "torrent",
+    "mime": "application/x-bittorrent",
+    "cat": "data",
+    "desc": "BitTorrent 种子"
+  },
+  {
+    "ext": "bencode",
+    "mime": "application/x-bittorrent",
+    "cat": "data",
+    "desc": "Bencode 编码"
+  },
+  {
+    "ext": "kml",
+    "mime": "application/vnd.google-earth.kml+xml",
+    "cat": "data",
+    "desc": "Google Earth KML"
+  },
+  {
+    "ext": "gpx",
+    "mime": "application/gpx+xml",
+    "cat": "data",
+    "desc": "GPS 交换格式"
+  },
+  {
+    "ext": "tcx",
+    "mime": "application/vnd.garmin.tcx+xml",
+    "cat": "data",
+    "desc": "Garmin Training Center XML"
+  }
+];
+
+const $ = (s) => document.querySelector(s);
+const COPY_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+
+const CAT_LABELS = {
+  docs: '文档',
+  image: '图片',
+  audio: '音频',
+  video: '视频',
+  font: '字体',
+  archive: '压缩',
+  code: '代码',
+  data: '数据'
+};
+
+/* 已知的多段扩展名，用于文件名扩展名提取（优先匹配） */
+const MULTI_PART_EXTS = ['tar.gz', 'tar.bz2', 'tar.bz', 'tar.xz', 'tar.lz', 'tar.lzo', 'tar.lzma', 'tar.zst', 'tar.Z'];
+
+let currentCat = 'all';
+let currentQuery = '';
+
+/* ---------- 通用工具 ---------- */
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return true; } catch {}
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch {}
+  document.body.removeChild(ta);
+  return ok;
+}
+
+let toastTimer;
+function showToast(msg, ok = true) {
+  const t = $('#toast');
+  t.innerHTML = (ok
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+  ) + '<span>' + escapeHtml(msg) + '</span>';
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 1600);
+}
+
+async function copyAndToast(text, msg) {
+  if (await copyText(text)) showToast(msg);
+  else showToast('复制失败', false);
+}
+
+/* 从文件名提取扩展名，优先识别 .tar.gz 等多段后缀 */
+function extFromFilename(name) {
+  const lower = name.toLowerCase();
+  for (const multi of MULTI_PART_EXTS) {
+    if (lower.endsWith('.' + multi)) return multi;
+  }
+  const idx = lower.lastIndexOf('.');
+  if (idx <= 0 || idx === lower.length - 1) return lower;
+  return lower.slice(idx + 1);
+}
+
+/* ---------- 搜索与过滤 ---------- */
+function normalize(s) { return String(s).toLowerCase().replace(/\s+/g, ''); }
+
+function matches(item, query) {
+  if (!query) return true;
+  const q = normalize(query);
+  return normalize(item.ext).includes(q)
+    || normalize(item.mime).includes(q)
+    || normalize(item.desc).includes(q)
+    || normalize(CAT_LABELS[item.cat]).includes(q);
+}
+
+function getFiltered() {
+  let query = currentQuery;
+  // 如果输入包含点号，按文件名处理，提取扩展名作为查询词
+  if (query.includes('.')) {
+    query = extFromFilename(query);
+  }
+  return MIME_DATA.filter(item => {
+    const catOk = currentCat === 'all' || item.cat === currentCat;
+    return catOk && matches(item, query);
+  });
+}
+
+/* ---------- 渲染 ---------- */
+function render() {
+  const list = getFiltered();
+  const main = $('#main');
+
+  $('#totalStat').textContent = MIME_DATA.length;
+  $('#matchStat').textContent = list.length;
+
+  if (!currentQuery && currentCat === 'all') {
+    main.innerHTML = '';
+    main.appendChild($('#introState'));
+    $('#introState').classList.remove('hidden');
+    return;
+  }
+
+  $('#introState').classList.add('hidden');
+  main.innerHTML = '';
+
+  const wrap = document.createElement('div');
+  wrap.className = 'table-wrap';
+  const table = document.createElement('table');
+  table.innerHTML =
+    '<thead><tr>' +
+      '<th class="col-ext">扩展名</th>' +
+      '<th class="col-mime">MIME 类型</th>' +
+      '<th class="col-cat">类别</th>' +
+      '<th class="col-desc">说明</th>' +
+      '<th class="col-action"></th>' +
+    '</tr></thead>';
+
+  const tbody = document.createElement('tbody');
+  if (list.length === 0) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td colspan="5" style="text-align:center;padding:32px 20px;color:var(--text-muted);">' +
+      '未收录，可能为自定义格式<br><span style="font-size:12px;color:var(--text-faint)">换个关键词试试</span>' +
+      '</td>';
+    tbody.appendChild(tr);
+  } else {
+    list.forEach(item => {
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td><span class="ext-pill">' + escapeHtml(item.ext) + '</span></td>' +
+        '<td><code class="mime-code">' + escapeHtml(item.mime) + '</code></td>' +
+        '<td><span class="cat-badge">' + escapeHtml(CAT_LABELS[item.cat]) + '</span></td>' +
+        '<td class="desc-txt">' + escapeHtml(item.desc) + '</td>' +
+        '<td class="col-action"><button class="copy-btn" title="复制扩展名">' + COPY_ICON + '</button></td>';
+
+      // 点击行复制 MIME 类型
+      tr.addEventListener('click', (e) => {
+        if (e.target.closest('.copy-btn')) return;
+        copyAndToast(item.mime, '已复制 MIME：' + item.mime);
+      });
+
+      // 点击按钮复制扩展名
+      const btn = tr.querySelector('.copy-btn');
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (await copyText(item.ext)) {
+          btn.classList.add('copied');
+          const old = btn.innerHTML;
+          btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+          showToast('已复制扩展名：' + item.ext);
+          setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = old; }, 1200);
+        } else {
+          showToast('复制失败', false);
+        }
+      });
+
+      tbody.appendChild(tr);
+    });
+  }
+  table.appendChild(tbody);
+  wrap.appendChild(table);
+  main.appendChild(wrap);
+}
+
+/* ---------- 事件绑定 ---------- */
+const searchInput = $('#search');
+searchInput.addEventListener('input', () => {
+  currentQuery = searchInput.value.trim();
+  render();
+});
+
+const catButtons = document.querySelectorAll('#catSeg button');
+catButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    currentCat = btn.dataset.cat;
+    catButtons.forEach(b => b.classList.toggle('active', b === btn));
+    render();
+  });
+});
+
+/* 初始化分类控件激活状态 */
+catButtons.forEach(b => b.classList.toggle('active', b.dataset.cat === 'all'));
+
+/* ---------- 主题切换 ---------- */
+const themeBtn = $('#themeBtn');
+const SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+const MOON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+function setTheme(dark) {
+  document.documentElement.classList.toggle('dark', dark);
+  themeBtn.innerHTML = dark ? SUN : MOON;
+  themeBtn.title = dark ? '切换到浅色' : '切换到深色';
+  try { localStorage.setItem('mime-theme', dark ? 'dark' : 'light'); } catch {}
+}
+themeBtn.addEventListener('click', () => setTheme(!document.documentElement.classList.contains('dark')));
+try {
+  const saved = localStorage.getItem('mime-theme');
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  setTheme(saved ? saved === 'dark' : prefersDark);
+} catch { setTheme(false); }
+
+/* 初始化统计 */
+$('#totalStat').textContent = MIME_DATA.length;
+$('#matchStat').textContent = MIME_DATA.length;
+</script>
+</body>
+</html>
