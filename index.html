@@ -260,7 +260,7 @@
 </div>
 
 <main id="main">
-  <div class="empty-state" id="introState">
+  <div class="empty-state">
     <div class="big-icon">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
     </div>
@@ -3849,8 +3849,8 @@ const CAT_LABELS = {
   data: '数据'
 };
 
-/* 已知的多段扩展名，用于文件名扩展名提取（优先匹配） */
-const MULTI_PART_EXTS = ['tar.gz', 'tar.bz2', 'tar.bz', 'tar.xz', 'tar.lz', 'tar.lzo', 'tar.lzma', 'tar.zst', 'tar.Z'];
+/* 已知的多段扩展名，按长度降序排列，用于文件名扩展名提取 */
+const MULTI_PART_EXTS = ['tar.bz2', 'tar.lzma', 'tar.gz', 'tar.xz', 'tar.zst', 'tar.bz', 'tar.lz', 'tar.lzo', 'tar.Z'];
 
 let currentCat = 'all';
 let currentQuery = '';
@@ -3890,11 +3890,13 @@ async function copyAndToast(text, msg) {
   else showToast('复制失败', false);
 }
 
-/* 从文件名提取扩展名，优先识别 .tar.gz 等多段后缀 */
+/* 从文件名提取扩展名，优先识别 .tar.gz 等多段后缀；若该多段后缀未收录，则回退到最后一段 */
 function extFromFilename(name) {
   const lower = name.toLowerCase();
   for (const multi of MULTI_PART_EXTS) {
-    if (lower.endsWith('.' + multi)) return multi;
+    if (lower.endsWith('.' + multi) && MIME_DATA.some(i => i.ext === multi)) {
+      return multi;
+    }
   }
   const idx = lower.lastIndexOf('.');
   if (idx <= 0 || idx === lower.length - 1) return lower;
@@ -3934,13 +3936,18 @@ function render() {
   $('#matchStat').textContent = list.length;
 
   if (!currentQuery && currentCat === 'all') {
-    main.innerHTML = '';
-    main.appendChild($('#introState'));
-    $('#introState').classList.remove('hidden');
+    main.innerHTML =
+      '<div class="empty-state">' +
+        '<div class="big-icon">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>' +
+        '</div>' +
+        '<h2>输入关键词开始查询</h2>' +
+        '<p>支持扩展名、MIME 类型、中文说明搜索；<br>也支持粘贴文件名自动提取扩展名（如 archive.tar.gz）。</p>' +
+        '<div class="hint">点击表格行复制 MIME 类型，点击行尾按钮复制扩展名。</div>' +
+      '</div>';
     return;
   }
 
-  $('#introState').classList.add('hidden');
   main.innerHTML = '';
 
   const wrap = document.createElement('div');
